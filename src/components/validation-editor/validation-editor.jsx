@@ -31,18 +31,22 @@ const OPTIONS = {
 };
 
 /**
- * Edit validation rules.
+ * The validation editor component.
  */
 class ValidationEditor extends Component {
   static displayName = 'ValidationEditor';
 
   static propTypes = {
-    validationRulesChanged: PropTypes.func.isRequired,
-    validationChangesCanceled: PropTypes.func.isRequired,
-    validationChangesSaved: PropTypes.func.isRequired,
+    validatorChanged: PropTypes.func.isRequired,
+    validatorCanceled: PropTypes.func.isRequired,
+    validatorSaved: PropTypes.func.isRequired,
     serverVersion: PropTypes.string.isRequired,
     fields: PropTypes.array,
-    validation: PropTypes.any,
+    validation: PropTypes.shape({
+      validator: PropTypes.string.isRequired,
+      isChanged: PropTypes.bool.isRequired,
+      syntaxError: PropTypes.object
+    }),
     error: PropTypes.string
   };
 
@@ -62,8 +66,47 @@ class ValidationEditor extends Component {
     );
   }
 
-  handleValidationChangesSave() {
-    this.props.validationChangesSaved(this.props.validation.validationRules);
+  /**
+   * Subscribe on mount.
+   */
+  componentDidMount() {
+    this.unsubFields = global.hadronApp.appRegistry.getStore('Field.Store').listen((fields) => {
+      this.completer.update(this.processFields(fields.fields));
+    });
+  }
+
+  /**
+   * Unsubscribe listeners.
+   */
+  componentWillUnmount() {
+    this.unsubFields();
+  }
+
+  /**
+   * Handles converting the field list to an ACE friendly format.
+   *
+   * @param {Object} fields - The fields.
+   *
+   * @returns {Array} The field list.
+   */
+  processFields = (fields) => {
+    return Object.keys(fields).map((key) => {
+      const field = (key.indexOf('.') > -1 || key.indexOf(' ') > -1) ? `"${key}"` : key;
+      return {
+        name: key,
+        value: field,
+        score: 1,
+        meta: 'field',
+        version: '0.0.0'
+      };
+    });
+  }
+
+  /**
+   * Save validator changes.
+   */
+  handleValidatorSave() {
+    this.props.validatorSaved(this.props.validation.validator);
   }
 
   /**
@@ -77,6 +120,7 @@ class ValidationEditor extends Component {
   //  return (
   //    nextProps.error !== this.props.error ||
   //    nextProps.validation.syntaxError !== this.props.validation.syntaxError ||
+  //    nextProps.validation.isChanged !== this.props.validation.isChanged ||
   //    nextProps.serverVersion !== this.props.serverVersion ||
   //    nextProps.fields.length !== this.props.fields.length
   //  );
@@ -91,7 +135,7 @@ class ValidationEditor extends Component {
     if (
       !this.props.error &&
       !this.props.validation.syntaxError &&
-      this.props.validation.validationChanged
+      this.props.validation.isChanged
     ) {
       return (
         <div
@@ -100,11 +144,11 @@ class ValidationEditor extends Component {
           <TextButton
             className="btn btn-default btn-xs"
             text="Update"
-            clickHandler={this.handleValidationChangesSave.bind(this)} />
+            clickHandler={this.handleValidatorSave.bind(this)} />
           <TextButton
             className={`btn btn-borderless btn-xs ${classnames(styles.cancel)}`}
             text="Cancel"
-            clickHandler={this.props.validationChangesCanceled} />
+            clickHandler={this.props.validatorCanceled} />
         </div>
       );
     }
@@ -158,8 +202,8 @@ class ValidationEditor extends Component {
             theme="mongodb"
             width="100%"
             height="100%"
-            value={this.props.validation.validationRules}
-            onChange={this.props.validationRulesChanged}
+            value={this.props.validation.validator}
+            onChange={this.props.validatorChanged}
             editorProps={{$blockScrolling: Infinity}}
             setOptions={OPTIONS}
             onFocus={() => tools.setCompleters([this.completer])}

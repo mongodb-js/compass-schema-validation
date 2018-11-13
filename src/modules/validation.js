@@ -9,26 +9,26 @@ const queryLanguage = require('mongodb-language-model');
 const PREFIX = 'validation';
 
 /**
- * Validation rules changed action name.
+ * Validator changed action name.
  */
-export const VALIDATION_RULES_CHANGED = `${PREFIX}/VALIDATION_RULES_CHANGED`;
+export const VALIDATOR_CHANGED = `${PREFIX}/VALIDATOR_CHANGED`;
 
 /**
- * Validation changes canceled action name.
+ * Validator canceled action name.
  */
-export const VALIDATION_CHANGES_CANCELED = `${PREFIX}/VALIDATION_CHANGES_CANCELED`;
+export const VALIDATOR_CANCELED = `${PREFIX}/VALIDATOR_CANCELED`;
 
 /**
- * Validation changes saved action name.
+ * Validator saved action name.
  */
-export const VALIDATION_CHANGES_SAVED = `${PREFIX}/VALIDATION_CHANGES_SAVED`;
+export const VALIDATOR_SAVED = `${PREFIX}/VALIDATOR_SAVED`;
 
 /**
  * The initial state.
  */
 export const INITIAL_STATE = {
-  validationRules: '',
-  validationChanged: false,
+  validator: '',
+  isChanged: false,
   syntaxError: null
 };
 
@@ -46,18 +46,12 @@ function getQuerySandbox() {
     },
     DBRef: bson.DBRef,
     Decimal128: bson.Decimal128,
-    NumberDecimal: function(s) {
-      return bson.Decimal128.fromString(s);
-    },
+    NumberDecimal: bson.Decimal128.fromString,
     Double: bson.Double,
     Int32: bson.Int32,
-    NumberInt: function(s) {
-      return parseInt(s, 10);
-    },
+    NumberInt: (s) => parseInt(s, 10),
     Long: bson.Long,
-    NumberLong: function(v) {
-      return bson.Long.fromNumber(v);
-    },
+    NumberLong: bson.Long.fromNumber,
     Int64: bson.Long,
     Map: bson.Map,
     MaxKey: bson.MaxKey,
@@ -98,77 +92,77 @@ function executeJavascript(input, sandbox) {
 }
 
 /**
- * Validate rules as simple query.
+ * Check validator as a simple query.
  *
- * @param {String} state - Validation rules.
+ * @param {String} validator - Validator.
  *
- * @returns {Boolean} Is rules valid.
+ * @returns {Boolean} Is validator correct.
  */
-const validateRules = (input) => {
-  const validatedRules = {input, syntaxError: null};
+const checkValidator = (validator) => {
+  const validation = {validator, syntaxError: null};
   const sandbox = getQuerySandbox();
 
   try {
-    validatedRules.input = EJSON.stringify(executeJavascript(input, sandbox));
-    validatedRules.syntaxError = queryLanguage.accepts(validatedRules.input)
+    validation.validator = EJSON.stringify(executeJavascript(validator, sandbox));
+    validation.syntaxError = queryLanguage.accepts(validation.validator)
       ? null
       : 'MongoDB language model does not accept the input';
   } catch (error) {
-    validatedRules.syntaxError = error;
+    validation.syntaxError = error;
   }
 
-  return validatedRules;
+  return validation;
 };
 
 /**
- * Change validation rules.
+ * Change validator.
  *
  * @param {Object} state - The state.
  * @param {Object} action - The action.
  *
  * @returns {Object} The new state.
  */
-const changeValidationRules = (state, action) => {
+const changeValidator = (state, action) => {
   const newState = {...state};
-  const validatedRules = validateRules(action.validationRules);
+  const validation = checkValidator(action.validator);
 
-  newState.validationChanged = true;
-  newState.validationRules = validatedRules.input;
-  newState.syntaxError = validatedRules.syntaxError;
+  newState.isChanged = true;
+  newState.validator = validation.validator;
+  newState.syntaxError = validation.syntaxError;
 
   return newState;
 };
 
 /**
- * Cancel validation changes.
+ * Cancel validator changes.
  *
  * @param {Object} state - The state
  *
  * @returns {Object} The new state.
  */
-const cancelValidationChanges = (state) => {
+const cancelValidator = (state) => {
   const newState = {...state};
 
-  newState.validationChanged = false;
-  newState.validationRules = ''; // TODO: Read validation from the collection to get old values.
+  newState.isChanged = false;
+  newState.validator = ''; // TODO: Read validation from the collection to get old values.
   newState.syntaxError = null;
 
   return newState;
 };
 
 /**
- * Cancel validation changes.
+ * Save validator changes.
  *
  * @param {Object} state - The state
  * @param {Object} action - The action.
  *
  * @returns {Object} The new state.
  */
-const saveValidationChanges = (state, action) => {
+const saveValidator = (state, action) => {
   const newState = {...state};
 
-  newState.validationChanged = false;
-  newState.validationRules = action.validationRules;
+  newState.isChanged = false;
+  newState.validator = action.validator;
   newState.syntaxError = null;
 
   // TODO: Save validation to the collection.
@@ -181,9 +175,9 @@ const saveValidationChanges = (state, action) => {
  */
 const MAPPINGS = {};
 
-MAPPINGS[VALIDATION_RULES_CHANGED] = changeValidationRules;
-MAPPINGS[VALIDATION_CHANGES_CANCELED] = cancelValidationChanges;
-MAPPINGS[VALIDATION_CHANGES_SAVED] = saveValidationChanges;
+MAPPINGS[VALIDATOR_CHANGED] = changeValidator;
+MAPPINGS[VALIDATOR_CANCELED] = cancelValidator;
+MAPPINGS[VALIDATOR_SAVED] = saveValidator;
 
 /**
  * Reducer function for handle state changes to status.
@@ -200,34 +194,73 @@ export default function reducer(state = INITIAL_STATE, action) {
 }
 
 /**
- * Action creator for validation rules changed events.
+ * Action creator for validator changed events.
  *
- * @param {String} value - Validation rules.
+ * @param {String} validator - Validator.
  *
- * @returns {Object} Validation rules changed action.
+ * @returns {Object} Validator changed action.
  */
-export const validationRulesChanged = (validationRules) => ({
-  type: VALIDATION_RULES_CHANGED,
-  validationRules
+export const validatorChanged = (validator) => ({
+  type: VALIDATOR_CHANGED,
+  validator
 });
 
 /**
- * Action creator for validation changes canceled events.
+ * Action creator for validator canceled events.
  *
- * @returns {Object} Validation changes canceled action.
+ * @returns {Object} Validator canceled action.
  */
-export const validationChangesCanceled = () => ({
-  type: VALIDATION_CHANGES_CANCELED
+export const validatorCanceled = () => ({
+  type: VALIDATOR_CANCELED
 });
 
 /**
- * Action creator for validation changes saved events.
+ * Action creator for validator saved events.
  *
- * @param {String} value - Validation rules.
+ * @param {String} validator - Validator.
  *
- * @returns {Object} Validation changes saved action.
+ * @returns {Object} Validator saved action.
  */
-export const validationChangesSaved = (validationRules) => ({
-  type: VALIDATION_CHANGES_SAVED,
-  validationRules
+export const validatorSaved = (validator) => ({
+  type: VALIDATOR_SAVED,
+  validator
 });
+
+/**
+ * Action creator for validation fetched events.
+ *
+ * @param {String} validator - Validator.
+ *
+ * @returns {Object} Validator saved action.
+ */
+export const validationFetched = (validator) => ({
+  type: VALIDATOR_SAVED,
+  validator
+});
+
+/**
+ * Fetch validation.
+ *
+ * @param {Object} namespace - Namespace.
+ *
+ * @returns {Function} The function.
+ */
+export const fetchValidation = (namespace) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    const dataService = state.dataService.dataService;
+    if (dataService) {
+      dataService.listCollections(namespace.database, {name: namespace.collection}, (error, data) => {
+        const options = data[0].options;
+
+        if (error || !options) {
+          // An error occured during fetch, e.g. missing permissions.
+          // TODO: dispatch(setError());
+          return;
+        }
+
+        // TODO: Set validation to props;
+      });
+    }
+  };
+};

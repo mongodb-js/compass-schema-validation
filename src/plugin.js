@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Provider } from 'react-redux';
-import CompassJsonSchemaValidation from 'components/compass-json-schema-validation';
+import CompassJsonSchemaValidation from 'components/compass-schema-validation';
 import store from 'stores';
 
 /**

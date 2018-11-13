@@ -3,20 +3,20 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 import ValidationEditor from 'components/validation-editor';
 
-import styles from './compass-json-schema-validation.less';
+import styles from './compass-schema-validation.less';
 
 import {
-  validationRulesChanged,
-  validationChangesCanceled,
-  validationChangesSaved
+  validatorChanged,
+  validatorCanceled,
+  validatorSaved
 } from 'modules/validation';
 import { namespaceChanged } from 'modules/namespace';
 
 /**
  * The core schema validation component.
  */
-class CompassJsonSchemaValidation extends Component {
-  static displayName = 'CompassJsonSchemaValidation';
+class CompassSchemaValidation extends Component {
+  static displayName = 'CompassSchemaValidation';
 
   render() {
     return (
@@ -47,15 +47,15 @@ const mapStateToProps = (state) => {
  * Connect the redux store to the component.
  * (dispatch)
  */
-const MappedCompassJsonSchemaValidation = connect(
+const MappedCompassSchemaValidation = connect(
   mapStateToProps,
   {
-    validationRulesChanged,
-    validationChangesCanceled,
-    validationChangesSaved,
+    validatorChanged,
+    validatorCanceled,
+    validatorSaved,
     namespaceChanged
   },
-)(CompassJsonSchemaValidation);
+)(CompassSchemaValidation);
 
-export default MappedCompassJsonSchemaValidation;
-export {CompassJsonSchemaValidation};
+export default MappedCompassSchemaValidation;
+export {CompassSchemaValidation};
