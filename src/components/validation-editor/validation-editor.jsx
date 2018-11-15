@@ -20,10 +20,9 @@ const tools = ace.acequire('ace/ext/language_tools');
 const OPTIONS = {
   enableLiveAutocompletion: true,
   tabSize: 2,
-  useSoftTabs: true,
   fontSize: 11,
   minLines: 10,
-  maxLines: 10,
+  maxLines: Infinity,
   highlightActiveLine: false,
   showGutter: true,
   useWorker: false,
@@ -83,6 +82,13 @@ class ValidationEditor extends Component {
   }
 
   /**
+   * Save validator changes.
+   */
+  onValidatorSave() {
+    this.props.validatorSaved(this.props.validation.validator);
+  }
+
+  /**
    * Handles converting the field list to an ACE friendly format.
    *
    * @param {Object} fields - The fields.
@@ -100,13 +106,6 @@ class ValidationEditor extends Component {
         version: '0.0.0'
       };
     });
-  }
-
-  /**
-   * Save validator changes.
-   */
-  handleValidatorSave() {
-    this.props.validatorSaved(this.props.validation.validator);
   }
 
   /**
@@ -144,7 +143,7 @@ class ValidationEditor extends Component {
           <TextButton
             className="btn btn-default btn-xs"
             text="Update"
-            clickHandler={this.handleValidatorSave.bind(this)} />
+            clickHandler={this.onValidatorSave.bind(this)} />
           <TextButton
             className={`btn btn-borderless btn-xs ${classnames(styles.cancel)}`}
             text="Cancel"
@@ -206,14 +205,7 @@ class ValidationEditor extends Component {
             onChange={this.props.validatorChanged}
             editorProps={{$blockScrolling: Infinity}}
             setOptions={OPTIONS}
-            onFocus={() => tools.setCompleters([this.completer])}
-            onLoad={(editor) => {
-              this.editor = editor;
-              this.editor.commands.addCommand({
-                name: 'executeQuery',
-                bindKey: {win: 'Enter', mac: 'Enter'}
-              });
-            }}/>
+            onFocus={() => tools.setCompleters([this.completer])} />
           </div>
           {this.renderValidationChangedButtons()}
           {this.renderSyntaxError()}

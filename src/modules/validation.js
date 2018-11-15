@@ -24,6 +24,11 @@ export const VALIDATOR_CANCELED = `${PREFIX}/VALIDATOR_CANCELED`;
 export const VALIDATOR_SAVED = `${PREFIX}/VALIDATOR_SAVED`;
 
 /**
+ * Validator created action name.
+ */
+export const VALIDATOR_CREATED = `${PREFIX}/VALIDATOR_CREATED`;
+
+/**
  * The initial state.
  */
 export const INITIAL_STATE = {
@@ -99,19 +104,20 @@ function executeJavascript(input, sandbox) {
  * @returns {Boolean} Is validator correct.
  */
 const checkValidator = (validator) => {
-  const validation = {validator, syntaxError: null};
   const sandbox = getQuerySandbox();
+  let syntaxError = null;
 
   try {
-    validation.validator = EJSON.stringify(executeJavascript(validator, sandbox));
-    validation.syntaxError = queryLanguage.accepts(validation.validator)
+    const parsedValidator = EJSON.stringify(executeJavascript(validator, sandbox));
+
+    syntaxError = queryLanguage.accepts(parsedValidator)
       ? null
       : 'MongoDB language model does not accept the input';
   } catch (error) {
-    validation.syntaxError = error;
+    syntaxError = error;
   }
 
-  return validation;
+  return syntaxError;
 };
 
 /**
@@ -124,11 +130,10 @@ const checkValidator = (validator) => {
  */
 const changeValidator = (state, action) => {
   const newState = {...state};
-  const validation = checkValidator(action.validator);
 
   newState.isChanged = true;
-  newState.validator = validation.validator;
-  newState.syntaxError = validation.syntaxError;
+  newState.validator = action.validator;
+  newState.syntaxError = checkValidator(action.validator);
 
   return newState;
 };
@@ -171,6 +176,24 @@ const saveValidator = (state, action) => {
 };
 
 /**
+ * Create validator changes.
+ *
+ * @param {Object} state - The state
+ * @param {Object} action - The action.
+ *
+ * @returns {Object} The new state.
+ */
+const createValidator = (state, action) => {
+  const newState = {...state};
+
+  newState.isChanged = false;
+  newState.validator = action.validator;
+  newState.syntaxError = null;
+
+  return newState;
+};
+
+/**
  * To not have a huge switch statement in the reducer.
  */
 const MAPPINGS = {};
@@ -178,6 +201,7 @@ const MAPPINGS = {};
 MAPPINGS[VALIDATOR_CHANGED] = changeValidator;
 MAPPINGS[VALIDATOR_CANCELED] = cancelValidator;
 MAPPINGS[VALIDATOR_SAVED] = saveValidator;
+MAPPINGS[VALIDATOR_CREATED] = createValidator;
 
 /**
  * Reducer function for handle state changes to status.
@@ -202,6 +226,18 @@ export default function reducer(state = INITIAL_STATE, action) {
  */
 export const validatorChanged = (validator) => ({
   type: VALIDATOR_CHANGED,
+  validator
+});
+
+/**
+ * Action creator for validator created events.
+ *
+ * @param {String} validator - Validator.
+ *
+ * @returns {Object} Validator created action.
+ */
+export const validatorCreated = (validator) => ({
+  type: VALIDATOR_CREATED,
   validator
 });
 
@@ -259,7 +295,9 @@ export const fetchValidation = (namespace) => {
           return;
         }
 
-        // TODO: Set validation to props;
+        const validator = options.validator || {};
+
+        return dispatch(validatorCreated(EJSON.stringify(validator, null, 2)));
       });
     }
   };
