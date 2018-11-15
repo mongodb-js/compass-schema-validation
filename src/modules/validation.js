@@ -1,7 +1,7 @@
 const bson = require('bson');
 const Context = require('context-eval');
 const EJSON = require('mongodb-extended-json');
-const queryLanguage = require('mongodb-language-model');
+const javascriptStringify = require('javascript-stringify');
 
 /**
  * The module action prefix.
@@ -105,19 +105,15 @@ function executeJavascript(input, sandbox) {
  */
 const checkValidator = (validator) => {
   const sandbox = getQuerySandbox();
-  let syntaxError = null;
+  const validation = { syntaxError: null, validator};
 
   try {
-    const parsedValidator = EJSON.stringify(executeJavascript(validator, sandbox));
-
-    syntaxError = queryLanguage.accepts(parsedValidator)
-      ? null
-      : 'MongoDB language model does not accept the input';
+    validation.validator = javascriptStringify(executeJavascript(validator, sandbox), null, 2);
   } catch (error) {
-    syntaxError = error;
+    validation.syntaxError = error;
   }
 
-  return syntaxError;
+  return validation;
 };
 
 /**
@@ -130,10 +126,11 @@ const checkValidator = (validator) => {
  */
 const changeValidator = (state, action) => {
   const newState = {...state};
+  const validator = checkValidator(action.validator);
 
   newState.isChanged = true;
-  newState.validator = action.validator;
-  newState.syntaxError = checkValidator(action.validator);
+  newState.validator = validator.validator;
+  newState.syntaxError = validator.syntaxError;
 
   return newState;
 };
@@ -185,9 +182,10 @@ const saveValidator = (state, action) => {
  */
 const createValidator = (state, action) => {
   const newState = {...state};
+  const validator = checkValidator(action.validator);
 
   newState.isChanged = false;
-  newState.validator = action.validator;
+  newState.validator = validator.validator;
   newState.syntaxError = null;
 
   return newState;

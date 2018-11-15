@@ -126,62 +126,38 @@ class ValidationEditor extends Component {
   // }
 
   /**
-   * Render validation changed buttons.
+   * Render actions pannel.
    *
    * @returns {React.Component} The component.
    */
-  renderValidationChangedButtons() {
-    if (
-      !this.props.error &&
-      !this.props.validation.syntaxError &&
-      this.props.validation.isChanged
-    ) {
+  renderActionsPanel() {
+    if (this.props.error || this.props.validation.syntaxError || this.props.validation.isChanged) {
+      let colorStyle = styles['validation-action-update'];
+      let message = '';
+
+      if (this.props.validation.syntaxError) {
+        colorStyle = styles['validation-action-syntax-error'];
+        message = this.props.validation.syntaxError.message;
+      }
+
+      if (this.props.error) {
+        colorStyle = styles['validation-action-error'];
+        message = this.props.error.message;
+      }
+
       return (
-        <div
-          className={classnames(styles['validation-changed-buttons'])}
-        >
-          <TextButton
-            className="btn btn-default btn-xs"
-            text="Update"
-            clickHandler={this.onValidatorSave.bind(this)} />
+        <div className={classnames({[styles['validation-action']]: true, [colorStyle]: true})}>
+          <div className={styles['validation-message']}>
+            {message}
+          </div>
           <TextButton
             className={`btn btn-borderless btn-xs ${classnames(styles.cancel)}`}
             text="Cancel"
             clickHandler={this.props.validatorCanceled} />
-        </div>
-      );
-    }
-  }
-
-  /**
-   * Render the syntax error.
-   *
-   * @returns {React.Component} The component.
-   */
-  renderSyntaxError() {
-    if (!this.props.error && this.props.validation.syntaxError) {
-      return (
-        <div
-          className={classnames(styles['validation-syntax-error'])}
-        >
-          {this.props.validation.syntaxError.message}
-        </div>
-      );
-    }
-  }
-
-  /**
-   * Render the error.
-   *
-   * @returns {React.Component} The component.
-   */
-  renderError() {
-    if (this.props.error) {
-      return (
-        <div
-          className={classnames(styles['validation-error'])}
-        >
-          {this.props.error.message}
+          <TextButton
+            className="btn btn-default btn-xs"
+            text="Update"
+            clickHandler={this.onValidatorSave.bind(this)} />
         </div>
       );
     }
@@ -207,9 +183,7 @@ class ValidationEditor extends Component {
             setOptions={OPTIONS}
             onFocus={() => tools.setCompleters([this.completer])} />
           </div>
-          {this.renderValidationChangedButtons()}
-          {this.renderSyntaxError()}
-          {this.renderError()}
+          {this.renderActionsPanel()}
       </div>
     );
   }
