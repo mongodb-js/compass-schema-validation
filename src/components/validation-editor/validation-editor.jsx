@@ -5,6 +5,8 @@ import AceEditor from 'react-ace';
 import ace from 'brace';
 import { QueryAutoCompleter } from 'mongodb-ace-autocompleter';
 import { TextButton } from 'hadron-react-buttons';
+import { InfoSprinkle } from 'hadron-react-components';
+import ValidationSelector from 'components/validation-selector';
 
 import styles from './validation-editor.less';
 
@@ -30,6 +32,26 @@ const OPTIONS = {
 };
 
 /**
+ * Validation actions options.
+ */
+const ACTION_OPTIONS = { warn: 'Warning', error: 'Error' };
+
+/**
+ * Validation level options.
+ */
+const LEVEL_OPTIONS = { off: 'Off', moderate: 'Moderate', strict: 'Strict' };
+
+/**
+ * URL to validation action documentation.
+ */
+const ACTION_HELP_URL = 'https://docs.mongodb.com/manual/reference/command/collMod/#validationAction';
+
+/**
+ * URL to validation level documentation.
+ */
+const LEVEL_HELP_URL = 'https://docs.mongodb.com/manual/reference/command/collMod/#validationLevel';
+
+/**
  * The validation editor component.
  */
 class ValidationEditor extends Component {
@@ -38,15 +60,20 @@ class ValidationEditor extends Component {
   static propTypes = {
     validatorChanged: PropTypes.func.isRequired,
     validatorCanceled: PropTypes.func.isRequired,
-    validatorSaved: PropTypes.func.isRequired,
+    saveValidation: PropTypes.func.isRequired,
+    validationActionChanged: PropTypes.func.isRequired,
+    validationLevelChanged: PropTypes.func.isRequired,
     serverVersion: PropTypes.string.isRequired,
     fields: PropTypes.array,
     validation: PropTypes.shape({
       validator: PropTypes.string.isRequired,
+      validationAction: PropTypes.string.isRequired,
+      validationLevel: PropTypes.string.isRequired,
       isChanged: PropTypes.bool.isRequired,
       syntaxError: PropTypes.object
     }),
-    error: PropTypes.string
+    error: PropTypes.string,
+    openLink: PropTypes.func.isRequired
   };
 
   /**
@@ -69,9 +96,11 @@ class ValidationEditor extends Component {
    * Subscribe on mount.
    */
   componentDidMount() {
-    this.unsubFields = global.hadronApp.appRegistry.getStore('Field.Store').listen((fields) => {
-      this.completer.update(this.processFields(fields.fields));
-    });
+    this.unsubFields = global.hadronApp.appRegistry
+      .getStore('Field.Store')
+      .listen((fields) => this.completer.update(
+        this.processFields(fields.fields)
+      ));
   }
 
   /**
@@ -85,7 +114,7 @@ class ValidationEditor extends Component {
    * Save validator changes.
    */
   onValidatorSave() {
-    this.props.validatorSaved(this.props.validation.validator);
+    this.props.saveValidation(this.props.validation.validator);
   }
 
   /**
@@ -95,18 +124,15 @@ class ValidationEditor extends Component {
    *
    * @returns {Array} The field list.
    */
-  processFields = (fields) => {
-    return Object.keys(fields).map((key) => {
-      const field = (key.indexOf('.') > -1 || key.indexOf(' ') > -1) ? `"${key}"` : key;
-      return {
-        name: key,
-        value: field,
-        score: 1,
-        meta: 'field',
-        version: '0.0.0'
-      };
-    });
-  }
+  processFields = (fields) => Object
+    .keys(fields)
+    .map((name) => {
+      const value = (name.indexOf('.') > -1 || name.indexOf(' ') > -1)
+        ? `"${name}"`
+        : name;
+
+      return { name, value, score: 1, meta: 'field', version: '0.0.0' };
+    })
 
   /**
    * Should the component update?
@@ -124,6 +150,62 @@ class ValidationEditor extends Component {
   //    nextProps.fields.length !== this.props.fields.length
   //  );
   // }
+
+  /**
+   * Render action selector.
+   *
+   * @returns {React.Component} The component.
+   */
+  renderActionSelector() {
+    const label = [
+      <span key="validation-action-span">Validation Action</span>,
+      <InfoSprinkle
+        key="validation-action-sprinkle"
+        helpLink={ACTION_HELP_URL}
+        onClickHandler={this.props.openLink}
+      />
+    ];
+
+    return (
+      <div className={classnames(styles['validation-option'])}>
+        <ValidationSelector
+          id="validation-action-selector"
+          bsSize="xs"
+          options={ACTION_OPTIONS}
+          title={ACTION_OPTIONS[this.props.validation.validationAction]}
+          label={label}
+          onSelect={this.props.validationActionChanged} />
+      </div>
+    );
+  }
+
+  /**
+   * Render level selector.
+   *
+   * @returns {React.Component} The component.
+   */
+  renderLevelSelector() {
+    const label = [
+      <span key="validation-level-span">Validation Level</span>,
+      <InfoSprinkle
+        key="validation-level-sprinkle"
+        helpLink={LEVEL_HELP_URL}
+        onClickHandler={this.props.openLink}
+      />
+    ];
+
+    return (
+      <div className={classnames(styles['validation-option'])}>
+        <ValidationSelector
+          id="validation-level-selector"
+          bsSize="xs"
+          options={LEVEL_OPTIONS}
+          title={LEVEL_OPTIONS[this.props.validation.validationLevel]}
+          label={label}
+          onSelect={this.props.validationLevelChanged} />
+      </div>
+    );
+  }
 
   /**
    * Render actions pannel.
@@ -171,6 +253,10 @@ class ValidationEditor extends Component {
   render() {
     return (
       <div className={classnames(styles['validation-editor'])}>
+        <div className={classnames(styles['validation-options-container'])}>
+          {this.renderActionSelector()}
+          {this.renderLevelSelector()}
+        </div>
         <div className={classnames(styles['brace-editor-container'])}>
           <AceEditor
             mode="mongodb"

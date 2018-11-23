@@ -2,15 +2,18 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import ValidationEditor from 'components/validation-editor';
-
-import styles from './compass-schema-validation.less';
-
+import { pick } from 'lodash';
 import {
   validatorChanged,
   validatorCanceled,
-  validatorSaved
+  saveValidation,
+  validationActionChanged,
+  validationLevelChanged
 } from 'modules/validation';
 import { namespaceChanged } from 'modules/namespace';
+import { openLink } from 'modules/link';
+
+import styles from './compass-schema-validation.less';
 
 /**
  * The core schema validation component.
@@ -34,26 +37,24 @@ class CompassSchemaValidation extends Component {
  *
  * @returns {Object} The mapped properties.
  */
-const mapStateToProps = (state) => {
-  return {
-    serverVersion: state.serverVersion,
-    validation: state.validation,
-    fields: state.fields,
-    namespace: state.namespace
-  };
-};
+const mapStateToProps = (state) => pick(
+  state,
+  ['serverVersion', 'validation', 'fields', 'namespace']
+);
 
 /**
- * Connect the redux store to the component.
- * (dispatch)
+ * Connect the redux store to the component (dispatch).
  */
 const MappedCompassSchemaValidation = connect(
   mapStateToProps,
   {
     validatorChanged,
     validatorCanceled,
-    validatorSaved,
-    namespaceChanged
+    saveValidation,
+    namespaceChanged,
+    validationActionChanged,
+    validationLevelChanged,
+    openLink
   },
 )(CompassSchemaValidation);
 

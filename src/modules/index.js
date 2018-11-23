@@ -53,7 +53,7 @@ const doNamespaceChanged = (state, action) => {
  * The action to state modifier mappings.
  */
 const MAPPINGS = {
-  [ NAMESPACE_CHANGED ]: doNamespaceChanged
+  [NAMESPACE_CHANGED]: doNamespaceChanged
 };
 
 /**

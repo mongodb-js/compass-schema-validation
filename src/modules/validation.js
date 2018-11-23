@@ -3,6 +3,8 @@ const Context = require('context-eval');
 const EJSON = require('mongodb-extended-json');
 const javascriptStringify = require('javascript-stringify');
 
+import { defaults } from 'lodash';
+
 /**
  * The module action prefix.
  */
@@ -29,10 +31,22 @@ export const VALIDATOR_SAVED = `${PREFIX}/VALIDATOR_SAVED`;
 export const VALIDATOR_CREATED = `${PREFIX}/VALIDATOR_CREATED`;
 
 /**
+ * Validation action changed action name.
+ */
+export const VALIDATION_ACTION_CHANGED = `${PREFIX}/VALIDATION_ACTION_CHANGED`;
+
+/**
+ * Validation level changed action name.
+ */
+export const VALIDATION_LEVEL_CHANGED = `${PREFIX}/VALIDATION_LEVEL_CHANGED`;
+
+/**
  * The initial state.
  */
 export const INITIAL_STATE = {
   validator: '',
+  validationAction: 'warning',
+  validationLevel: 'moderate',
   isChanged: false,
   syntaxError: null
 };
@@ -105,10 +119,10 @@ function executeJavascript(input, sandbox) {
  */
 const checkValidator = (validator) => {
   const sandbox = getQuerySandbox();
-  const validation = { syntaxError: null, validator};
+  const validation = { syntaxError: null, validator };
 
   try {
-    validation.validator = javascriptStringify(executeJavascript(validator, sandbox), null, 2);
+    validation.validator = executeJavascript(validator, sandbox);
   } catch (error) {
     validation.syntaxError = error;
   }
@@ -125,14 +139,14 @@ const checkValidator = (validator) => {
  * @returns {Object} The new state.
  */
 const changeValidator = (state, action) => {
-  const newState = {...state};
-  const validator = checkValidator(action.validator);
+  const validation = checkValidator(action.validator);
 
-  newState.isChanged = true;
-  newState.validator = validator.validator;
-  newState.syntaxError = validator.syntaxError;
-
-  return newState;
+  return {
+    ...state,
+    isChanged: true,
+    validator: action.validator,
+    syntaxError: validation.syntaxError
+  };
 };
 
 /**
@@ -142,32 +156,28 @@ const changeValidator = (state, action) => {
  *
  * @returns {Object} The new state.
  */
-const cancelValidator = (state) => {
-  const newState = {...state};
-
-  newState.isChanged = false;
-  newState.validator = ''; // TODO: Read validation from the collection to get old values.
-  newState.syntaxError = null;
-
-  return newState;
-};
+const cancelValidator = (state) => ({
+  ...state,
+  isChanged: false,
+  validator: state.prevValidator,
+  syntaxError: null
+});
 
 /**
- * Save validator changes.
+ * Update validator according to saved changes changes.
  *
  * @param {Object} state - The state
  * @param {Object} action - The action.
  *
  * @returns {Object} The new state.
  */
-const saveValidator = (state, action) => {
-  const newState = {...state};
-
-  newState.isChanged = false;
-  newState.validator = action.validator;
-  newState.syntaxError = null;
-
-  // TODO: Save validation to the collection.
+const updateValidator = (state, action) => {
+  const newState = {
+    ...state,
+    isChanged: false,
+    validator: action.validator,
+    syntaxError: null
+  };
 
   return newState;
 };
@@ -181,25 +191,55 @@ const saveValidator = (state, action) => {
  * @returns {Object} The new state.
  */
 const createValidator = (state, action) => {
-  const newState = {...state};
-  const validator = checkValidator(action.validator);
+  const validation = checkValidator(action.validator);
+  const validator = javascriptStringify(validation.validator, null, 2);
 
-  newState.isChanged = false;
-  newState.validator = validator.validator;
-  newState.syntaxError = null;
-
-  return newState;
+  return {
+    ...state,
+    isChanged: false,
+    prevValidator: validator,
+    validator: validator,
+    syntaxError: null
+  };
 };
+
+/**
+ * Change validation action.
+ *
+ * @param {Object} state - The state
+ * @param {Object} action - The action.
+ *
+ * @returns {Object} The new state.
+ */
+const changeValidationAction = (state, action) => ({
+  ...state,
+  validationAction: action.validationAction
+});
+
+/**
+ * Change validation level.
+ *
+ * @param {Object} state - The state
+ * @param {Object} action - The action.
+ *
+ * @returns {Object} The new state.
+ */
+const changeValidationLevel = (state, action) => ({
+  ...state,
+  validationLevel: action.validationLevel
+});
 
 /**
  * To not have a huge switch statement in the reducer.
  */
-const MAPPINGS = {};
-
-MAPPINGS[VALIDATOR_CHANGED] = changeValidator;
-MAPPINGS[VALIDATOR_CANCELED] = cancelValidator;
-MAPPINGS[VALIDATOR_SAVED] = saveValidator;
-MAPPINGS[VALIDATOR_CREATED] = createValidator;
+const MAPPINGS = {
+  [VALIDATOR_CHANGED]: changeValidator,
+  [VALIDATOR_CANCELED]: cancelValidator,
+  [VALIDATOR_CREATED]: createValidator,
+  [VALIDATOR_SAVED]: updateValidator,
+  [VALIDATION_ACTION_CHANGED]: changeValidationAction,
+  [VALIDATION_LEVEL_CHANGED]: changeValidationLevel
+};
 
 /**
  * Reducer function for handle state changes to status.
@@ -214,6 +254,30 @@ export default function reducer(state = INITIAL_STATE, action) {
 
   return fn ? fn(state, action) : state;
 }
+
+/**
+ * Action creator for validation action changed events.
+ *
+ * @param {String} validationAction - Validation action.
+ *
+ * @returns {Object} Validation action changed action.
+ */
+export const validationActionChanged = (validationAction) => ({
+  type: VALIDATION_ACTION_CHANGED,
+  validationAction
+});
+
+/**
+ * Action creator for validation level changed events.
+ *
+ * @param {String} validationLevel - Validation level.
+ *
+ * @returns {Object} Validation level changed action.
+ */
+export const validationLevelChanged = (validationLevel) => ({
+  type: VALIDATION_LEVEL_CHANGED,
+  validationLevel
+});
 
 /**
  * Action creator for validator changed events.
@@ -261,18 +325,6 @@ export const validatorSaved = (validator) => ({
 });
 
 /**
- * Action creator for validation fetched events.
- *
- * @param {String} validator - Validator.
- *
- * @returns {Object} Validator saved action.
- */
-export const validationFetched = (validator) => ({
-  type: VALIDATOR_SAVED,
-  validator
-});
-
-/**
  * Fetch validation.
  *
  * @param {Object} namespace - Namespace.
@@ -283,20 +335,74 @@ export const fetchValidation = (namespace) => {
   return (dispatch, getState) => {
     const state = getState();
     const dataService = state.dataService.dataService;
-    if (dataService) {
-      dataService.listCollections(namespace.database, {name: namespace.collection}, (error, data) => {
-        const options = data[0].options;
 
-        if (error || !options) {
-          // An error occured during fetch, e.g. missing permissions.
-          // TODO: dispatch(setError());
+    if (dataService) {
+      dataService.listCollections(
+        namespace.database,
+        { name: namespace.collection },
+        (error, data) => {
+          const options = data[0].options;
+          let validation = {
+            validator: INITIAL_STATE.validator,
+            validationAction: INITIAL_STATE.validationAction,
+            validationLevel: INITIAL_STATE.validationLevel
+          };
+
+          if (!error && options) {
+            validation = defaults(
+              {
+                validator: options.validator,
+                validationAction: options.validationAction,
+                validationLevel: options.validationLevel
+              },
+              validation
+            );
+          }
+
+          dispatch(validatorCreated(EJSON.stringify(validation.validator, null, 2)));
+          dispatch(validationActionChanged(validation.validationAction));
+          dispatch(validationLevelChanged(validation.validationLevel));
+
           return;
         }
+      );
+    }
+  };
+};
 
-        const validator = options.validator || {};
+/**
+ * Save validation.
+ *
+ * @param {Object} validator - Validator.
+ *
+ * @returns {Function} The function.
+ */
+export const saveValidation = (validator) => {
+  return (dispatch, getState) => {
+    const state = getState();
+    const dataService = state.dataService.dataService;
+    const namespace = state.namespace;
+    const validation = checkValidator(validator);
 
-        return dispatch(validatorCreated(EJSON.stringify(validator, null, 2)));
-      });
+    if (dataService) {
+      dataService.command(
+        namespace.database,
+        {
+          collMod: namespace.collection,
+          validator: validation.validator,
+          validationLevel: 'moderate'
+        },
+        (error, data) => {
+          console.log('error----------------------');
+          console.log(error);
+          console.log('----------------------');
+          console.log('data----------------------');
+          console.log(data);
+          console.log('----------------------');
+
+          return dispatch(validatorSaved(validator));
+        }
+      );
     }
   };
 };
