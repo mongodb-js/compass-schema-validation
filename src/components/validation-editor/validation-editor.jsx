@@ -59,10 +59,10 @@ class ValidationEditor extends Component {
 
   static propTypes = {
     validatorChanged: PropTypes.func.isRequired,
-    validatorCanceled: PropTypes.func.isRequired,
-    saveValidation: PropTypes.func.isRequired,
     validationActionChanged: PropTypes.func.isRequired,
     validationLevelChanged: PropTypes.func.isRequired,
+    validationCanceled: PropTypes.func.isRequired,
+    saveValidation: PropTypes.func.isRequired,
     serverVersion: PropTypes.string.isRequired,
     fields: PropTypes.array,
     validation: PropTypes.shape({
@@ -70,9 +70,9 @@ class ValidationEditor extends Component {
       validationAction: PropTypes.string.isRequired,
       validationLevel: PropTypes.string.isRequired,
       isChanged: PropTypes.bool.isRequired,
-      syntaxError: PropTypes.object
+      syntaxError: PropTypes.object,
+      error: PropTypes.object
     }),
-    error: PropTypes.string,
     openLink: PropTypes.func.isRequired
   };
 
@@ -114,7 +114,7 @@ class ValidationEditor extends Component {
    * Save validator changes.
    */
   onValidatorSave() {
-    this.props.saveValidation(this.props.validation.validator);
+    this.props.saveValidation(this.props.validation);
   }
 
   /**
@@ -143,7 +143,7 @@ class ValidationEditor extends Component {
    */
   // shouldComponentUpdate(nextProps) {
   //  return (
-  //    nextProps.error !== this.props.error ||
+  //    nextProps.validation.error !== this.props.validation.error ||
   //    nextProps.validation.syntaxError !== this.props.validation.syntaxError ||
   //    nextProps.validation.isChanged !== this.props.validation.isChanged ||
   //    nextProps.serverVersion !== this.props.serverVersion ||
@@ -213,7 +213,11 @@ class ValidationEditor extends Component {
    * @returns {React.Component} The component.
    */
   renderActionsPanel() {
-    if (this.props.error || this.props.validation.syntaxError || this.props.validation.isChanged) {
+    if (
+      this.props.validation.error ||
+      this.props.validation.syntaxError ||
+      this.props.validation.isChanged
+    ) {
       let colorStyle = styles['validation-action-update'];
       let message = '';
 
@@ -222,9 +226,9 @@ class ValidationEditor extends Component {
         message = this.props.validation.syntaxError.message;
       }
 
-      if (this.props.error) {
+      if (this.props.validation.error) {
         colorStyle = styles['validation-action-error'];
-        message = this.props.error.message;
+        message = this.props.validation.error.message;
       }
 
       return (
@@ -235,11 +239,15 @@ class ValidationEditor extends Component {
           <TextButton
             className={`btn btn-borderless btn-xs ${classnames(styles.cancel)}`}
             text="Cancel"
-            clickHandler={this.props.validatorCanceled} />
-          <TextButton
-            className="btn btn-default btn-xs"
-            text="Update"
-            clickHandler={this.onValidatorSave.bind(this)} />
+            clickHandler={this.props.validationCanceled} />
+          {
+            this.props.validation.syntaxError || this.props.validation.error
+            ? null
+            : <TextButton
+              className={`btn btn-default btn-xs ${classnames(styles.update)}`}
+              text="Update"
+              clickHandler={this.onValidatorSave.bind(this)} />
+          }
         </div>
       );
     }

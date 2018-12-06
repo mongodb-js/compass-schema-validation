@@ -5,7 +5,7 @@ import ValidationEditor from 'components/validation-editor';
 import { pick } from 'lodash';
 import {
   validatorChanged,
-  validatorCanceled,
+  validationCanceled,
   saveValidation,
   validationActionChanged,
   validationLevelChanged
@@ -49,7 +49,7 @@ const MappedCompassSchemaValidation = connect(
   mapStateToProps,
   {
     validatorChanged,
-    validatorCanceled,
+    validationCanceled,
     saveValidation,
     namespaceChanged,
     validationActionChanged,

@@ -3,7 +3,7 @@ const Context = require('context-eval');
 const EJSON = require('mongodb-extended-json');
 const javascriptStringify = require('javascript-stringify');
 
-import { defaults } from 'lodash';
+import { defaults, isEqual, pick } from 'lodash';
 
 /**
  * The module action prefix.
@@ -16,19 +16,19 @@ const PREFIX = 'validation';
 export const VALIDATOR_CHANGED = `${PREFIX}/VALIDATOR_CHANGED`;
 
 /**
- * Validator canceled action name.
+ * Validation canceled action name.
  */
-export const VALIDATOR_CANCELED = `${PREFIX}/VALIDATOR_CANCELED`;
+export const VALIDATION_CANCELED = `${PREFIX}/VALIDATION_CANCELED`;
 
 /**
- * Validator saved action name.
+ * Validation saved action name.
  */
-export const VALIDATOR_SAVED = `${PREFIX}/VALIDATOR_SAVED`;
+export const VALIDATION_SAVED = `${PREFIX}/VALIDATION_SAVED`;
 
 /**
- * Validator created action name.
+ * Validation created action name.
  */
-export const VALIDATOR_CREATED = `${PREFIX}/VALIDATOR_CREATED`;
+export const VALIDATION_CREATED = `${PREFIX}/VALIDATION_CREATED`;
 
 /**
  * Validation action changed action name.
@@ -45,10 +45,11 @@ export const VALIDATION_LEVEL_CHANGED = `${PREFIX}/VALIDATION_LEVEL_CHANGED`;
  */
 export const INITIAL_STATE = {
   validator: '',
-  validationAction: 'warning',
+  validationAction: 'warn',
   validationLevel: 'moderate',
   isChanged: false,
-  syntaxError: null
+  syntaxError: null,
+  error: null
 };
 
 /**
@@ -139,67 +140,79 @@ const checkValidator = (validator) => {
  * @returns {Object} The new state.
  */
 const changeValidator = (state, action) => {
-  const validation = checkValidator(action.validator);
+  const checkedValidator = checkValidator(action.validator);
+  const newState = {
+    ...state,
+    validator: action.validator,
+    syntaxError: checkedValidator.syntaxError
+  };
 
   return {
-    ...state,
-    isChanged: true,
-    validator: action.validator,
-    syntaxError: validation.syntaxError
+    ...newState,
+    isChanged: !isEqual(
+      pick(newState, ['validator', 'validationAction', 'validationLevel']),
+      state.prevValidation
+    )
   };
 };
 
 /**
- * Cancel validator changes.
+ * Cancel validation changes.
  *
  * @param {Object} state - The state
  *
  * @returns {Object} The new state.
  */
-const cancelValidator = (state) => ({
+const cancelValidation = (state) => ({
   ...state,
   isChanged: false,
-  validator: state.prevValidator,
-  syntaxError: null
+  validator: state.prevValidation.validator,
+  validationAction: state.prevValidation.validationAction,
+  validationLevel: state.prevValidation.validationLevel,
+  syntaxError: null,
+  error: null
 });
 
 /**
- * Update validator according to saved changes changes.
+ * Clears validation state after saving.
  *
  * @param {Object} state - The state
  * @param {Object} action - The action.
  *
  * @returns {Object} The new state.
  */
-const updateValidator = (state, action) => {
-  const newState = {
-    ...state,
-    isChanged: false,
-    validator: action.validator,
-    syntaxError: null
-  };
-
-  return newState;
-};
+const updateValidation = (state, action) => ({
+  ...state,
+  isChanged: false,
+  syntaxError: null,
+  error: action.error
+});
 
 /**
- * Create validator changes.
+ * Create validation changes.
  *
  * @param {Object} state - The state
  * @param {Object} action - The action.
  *
  * @returns {Object} The new state.
  */
-const createValidator = (state, action) => {
-  const validation = checkValidator(action.validator);
-  const validator = javascriptStringify(validation.validator, null, 2);
+const createValidation = (state, action) => {
+  const checkedValidator = checkValidator(action.validation.validator);
+  const validator = javascriptStringify(checkedValidator.validator, null, 2);
 
   return {
     ...state,
     isChanged: false,
-    prevValidator: validator,
+    prevValidation: {
+      validator,
+      validationAction: action.validation.validationAction,
+      validationLevel: action.validation.validationLevel
+    },
     validator: validator,
-    syntaxError: null
+    validationAction: action.validation.validationAction,
+    validationLevel: action.validation.validationLevel,
+    syntaxError: null,
+    error: null
   };
 };
 
@@ -211,10 +224,20 @@ const createValidator = (state, action) => {
  *
  * @returns {Object} The new state.
  */
-const changeValidationAction = (state, action) => ({
-  ...state,
-  validationAction: action.validationAction
-});
+const changeValidationAction = (state, action) => {
+  const newState = {
+    ...state,
+    validationAction: action.validationAction
+  };
+
+  return {
+    ...newState,
+    isChanged: !isEqual(
+      pick(newState, ['validator', 'validationAction', 'validationLevel']),
+      state.prevValidation
+    )
+  };
+};
 
 /**
  * Change validation level.
@@ -224,19 +247,29 @@ const changeValidationAction = (state, action) => ({
  *
  * @returns {Object} The new state.
  */
-const changeValidationLevel = (state, action) => ({
-  ...state,
-  validationLevel: action.validationLevel
-});
+const changeValidationLevel = (state, action) => {
+  const newState = {
+    ...state,
+    validationLevel: action.validationLevel
+  };
+
+  return {
+    ...newState,
+    isChanged: !isEqual(
+      pick(newState, ['validator', 'validationAction', 'validationLevel']),
+      state.prevValidation
+    )
+  };
+};
 
 /**
  * To not have a huge switch statement in the reducer.
  */
 const MAPPINGS = {
   [VALIDATOR_CHANGED]: changeValidator,
-  [VALIDATOR_CANCELED]: cancelValidator,
-  [VALIDATOR_CREATED]: createValidator,
-  [VALIDATOR_SAVED]: updateValidator,
+  [VALIDATION_CANCELED]: cancelValidation,
+  [VALIDATION_CREATED]: createValidation,
+  [VALIDATION_SAVED]: updateValidation,
   [VALIDATION_ACTION_CHANGED]: changeValidationAction,
   [VALIDATION_LEVEL_CHANGED]: changeValidationLevel
 };
@@ -292,36 +325,36 @@ export const validatorChanged = (validator) => ({
 });
 
 /**
- * Action creator for validator created events.
+ * Action creator for validation created events.
  *
- * @param {String} validator - Validator.
+ * @param {String} validation - Validation.
  *
- * @returns {Object} Validator created action.
+ * @returns {Object} Validation created action.
  */
-export const validatorCreated = (validator) => ({
-  type: VALIDATOR_CREATED,
-  validator
+export const validationCreated = (validation) => ({
+  type: VALIDATION_CREATED,
+  validation
 });
 
 /**
- * Action creator for validator canceled events.
+ * Action creator for validation canceled events.
  *
- * @returns {Object} Validator canceled action.
+ * @returns {Object} Validation canceled action.
  */
-export const validatorCanceled = () => ({
-  type: VALIDATOR_CANCELED
+export const validationCanceled = () => ({
+  type: VALIDATION_CANCELED
 });
 
 /**
- * Action creator for validator saved events.
+ * Action creator for validation saved events.
  *
- * @param {String} validator - Validator.
+ * @param {Object} item - Saved validation and error value. Null if there is no error.
  *
- * @returns {Object} Validator saved action.
+ * @returns {Object} Validation saved action.
  */
-export const validatorSaved = (validator) => ({
-  type: VALIDATOR_SAVED,
-  validator
+export const validationSaved = (item) => ({
+  type: VALIDATION_SAVED,
+  error: item.error
 });
 
 /**
@@ -351,7 +384,7 @@ export const fetchValidation = (namespace) => {
           if (!error && options) {
             validation = defaults(
               {
-                validator: options.validator,
+                validator: EJSON.stringify(options.validator, null, 2),
                 validationAction: options.validationAction,
                 validationLevel: options.validationLevel
               },
@@ -359,11 +392,7 @@ export const fetchValidation = (namespace) => {
             );
           }
 
-          dispatch(validatorCreated(EJSON.stringify(validation.validator, null, 2)));
-          dispatch(validationActionChanged(validation.validationAction));
-          dispatch(validationLevelChanged(validation.validationLevel));
-
-          return;
+          return dispatch(validationCreated(validation));
         }
       );
     }
@@ -373,34 +402,28 @@ export const fetchValidation = (namespace) => {
 /**
  * Save validation.
  *
- * @param {Object} validator - Validator.
+ * @param {Object} validation - Validation.
  *
  * @returns {Function} The function.
  */
-export const saveValidation = (validator) => {
+export const saveValidation = (validation) => {
   return (dispatch, getState) => {
     const state = getState();
     const dataService = state.dataService.dataService;
     const namespace = state.namespace;
-    const validation = checkValidator(validator);
+    const checkedValidator = checkValidator(validation.validator);
 
     if (dataService) {
-      dataService.command(
+      dataService.updateCollection(
         namespace.database,
         {
           collMod: namespace.collection,
-          validator: validation.validator,
-          validationLevel: 'moderate'
+          validator: checkedValidator.validator,
+          validationAction: validation.validationAction,
+          validationLevel: validation.validationLevel
         },
-        (error, data) => {
-          console.log('error----------------------');
-          console.log(error);
-          console.log('----------------------');
-          console.log('data----------------------');
-          console.log(data);
-          console.log('----------------------');
-
-          return dispatch(validatorSaved(validator));
+        (error) => {
+          return dispatch(validationSaved({ validation, error }));
         }
       );
     }
