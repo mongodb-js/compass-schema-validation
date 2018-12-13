@@ -8,7 +8,7 @@
 
 import Store from 'stores';
 
-describe('CompassJsonSchemaValidationStore [Store]', () => {
+describe('CompassSchemaValidationStore [Store]', () => {
   beforeEach(() => {
     Store.setState(Store.getInitialState());
   });
