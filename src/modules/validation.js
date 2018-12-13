@@ -185,7 +185,7 @@ const updateValidation = (state, action) => ({
   ...state,
   isChanged: false,
   syntaxError: null,
-  error: action.error
+  error: action.error ? action.error : null
 });
 
 /**

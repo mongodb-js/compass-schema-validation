@@ -1,8 +1,14 @@
 import AppRegistry from 'hadron-app-registry';
 import FieldStore, { activate } from '@mongodb-js/compass-field-store';
 import store from 'stores';
-import { validatorChanged } from 'modules/validation';
+import {
+  validatorChanged,
+  validationCreated,
+  validationSaved,
+  validationActionChanged
+} from 'modules/validation';
 import { reset, INITIAL_STATE } from '../modules/index';
+import javascriptStringify from 'javascript-stringify';
 
 describe('Schema Validation Store', () => {
   beforeEach(() => {
@@ -64,13 +70,97 @@ describe('Schema Validation Store', () => {
     context('when the action is VALIDATOR_CHANGED', () => {
       const validator = '{ name: { $type: 4 } }';
 
-      it('updates the stage in state', (done) => {
+      it('updates the validator in state', (done) => {
         const unsubscribe = store.subscribe(() => {
           unsubscribe();
           expect(store.getState().validation.validator).to.equal(validator);
           done();
         });
         store.dispatch(validatorChanged(validator));
+      });
+    });
+
+    context('when the action is VALIDATION_CANCELED', () => {
+      const validator = '{ name: { $type: 4 } }';
+
+      it('updates the stage in state', (done) => {
+        const unsubscribe = store.subscribe(() => {
+          unsubscribe();
+          expect(store.getState().validation.prevValidation).to.be.undefined;
+          done();
+        });
+        store.dispatch(validatorChanged(validator));
+      });
+    });
+
+    context('when the action is VALIDATION_CREATED', () => {
+      const validation = {
+        validator: { name: { $type: 4 } },
+        validationAction: 'warn',
+        validationLevel: 'moderate'
+      };
+
+      it('updates the validation in state', (done) => {
+        const unsubscribe = store.subscribe(() => {
+          const validator = javascriptStringify(validation.validator, null, 2);
+          const createdValidation = {
+            validator,
+            validationAction: 'warn',
+            validationLevel: 'moderate',
+            error: null,
+            syntaxError: null,
+            isChanged: false,
+            prevValidation: {
+              validator,
+              validationAction: 'warn',
+              validationLevel: 'moderate'
+            }
+          };
+
+          unsubscribe();
+          expect(store.getState().validation).to.deep.equal(createdValidation);
+          done();
+        });
+        store.dispatch(validationCreated(validation));
+      });
+    });
+
+    context('when the action is VALIDATION_SAVED', () => {
+      const validator = '{ error: null }';
+
+      it('updates the validation in state', (done) => {
+        const unsubscribe = store.subscribe(() => {
+          unsubscribe();
+          expect(store.getState().validation.error).to.equal(null);
+          done();
+        });
+        store.dispatch(validationSaved(validator));
+      });
+    });
+
+    context('when the action is VALIDATION_ACTION_CHANGED', () => {
+      const validationAction = 'error';
+
+      it('updates the validationAction in state', (done) => {
+        const unsubscribe = store.subscribe(() => {
+          unsubscribe();
+          expect(store.getState().validation.validationAction).to.equal(validationAction);
+          done();
+        });
+        store.dispatch(validationActionChanged(validationAction));
+      });
+    });
+
+    context('when the action is VALIDATION_LEVEL_CHANGED', () => {
+      const validationLevel = 'moderate';
+
+      it('updates the validationAction in state', (done) => {
+        const unsubscribe = store.subscribe(() => {
+          unsubscribe();
+          expect(store.getState().validation.validationLevel).to.equal(validationLevel);
+          done();
+        });
+        store.dispatch(validationActionChanged(validationLevel));
       });
     });
 
