@@ -93,17 +93,6 @@ class ValidationEditor extends Component {
   }
 
   /**
-   * Subscribe on mount.
-   */
-  componentDidMount() {
-    this.unsubFields = global.hadronApp.appRegistry
-      .getStore('Field.Store')
-      .listen((fields) => this.completer.update(
-        this.processFields(fields.fields)
-      ));
-  }
-
-  /**
    * Unsubscribe listeners.
    */
   componentWillUnmount() {
