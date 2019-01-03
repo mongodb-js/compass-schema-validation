@@ -3,9 +3,10 @@ import FieldStore, { activate } from '@mongodb-js/compass-field-store';
 import store from 'stores';
 import {
   validatorChanged,
-  validationCreated,
+  validationFetched,
   validationSaved,
-  validationActionChanged
+  validationActionChanged,
+  validationLevelChanged
 } from 'modules/validation';
 import { reset, INITIAL_STATE } from '../modules/index';
 import javascriptStringify from 'javascript-stringify';
@@ -121,7 +122,7 @@ describe('Schema Validation Store', () => {
           expect(store.getState().validation).to.deep.equal(createdValidation);
           done();
         });
-        store.dispatch(validationCreated(validation));
+        store.dispatch(validationFetched(validation));
       });
     });
 
@@ -160,7 +161,7 @@ describe('Schema Validation Store', () => {
           expect(store.getState().validation.validationLevel).to.equal(validationLevel);
           done();
         });
-        store.dispatch(validationActionChanged(validationLevel));
+        store.dispatch(validationLevelChanged(validationLevel));
       });
     });
 
