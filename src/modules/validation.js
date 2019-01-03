@@ -331,11 +331,11 @@ export const validatorChanged = (validator) => ({
 });
 
 /**
- * Action creator for validation created events.
+ * Action creator for validation fetched events.
  *
  * @param {String} validation - Validation.
  *
- * @returns {Object} Validation created action.
+ * @returns {Object} Validation fetched action.
  */
 export const validationFetched = (validation) => ({
   type: VALIDATION_FETCHED,
