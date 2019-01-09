@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import AceEditor from 'react-ace';
 import ace from 'brace';
-import { QueryAutoCompleter } from 'mongodb-ace-autocompleter';
+import { ValidationAutoCompleter } from 'mongodb-ace-autocompleter';
 import { TextButton } from 'hadron-react-buttons';
 import { InfoSprinkle } from 'hadron-react-components';
 import ValidationSelector from 'components/validation-selector';
@@ -58,6 +58,7 @@ class ValidationEditor extends Component {
   static displayName = 'ValidationEditor';
 
   static propTypes = {
+    fetchSampleDocuments: PropTypes.func.isRequired,
     validatorChanged: PropTypes.func.isRequired,
     validationActionChanged: PropTypes.func.isRequired,
     validationLevelChanged: PropTypes.func.isRequired,
@@ -85,7 +86,7 @@ class ValidationEditor extends Component {
     super(props);
     const textCompleter = tools.textCompleter;
 
-    this.completer = new QueryAutoCompleter(
+    this.completer = new ValidationAutoCompleter(
       props.serverVersion,
       textCompleter,
       props.fields
@@ -104,6 +105,26 @@ class ValidationEditor extends Component {
   }
 
   /**
+   * Should the component update?
+   *
+   * @param {Object} nextProps - The next properties.
+   *
+   * @returns {Boolean} If the component should update.
+   */
+  shouldComponentUpdate(nextProps) {
+    return (
+      nextProps.validation.validator !== this.props.validation.validator ||
+      nextProps.validation.validationAction !== this.props.validation.validationAction ||
+      nextProps.validation.validationLevel !== this.props.validation.validationLevel ||
+      nextProps.validation.error !== this.props.validation.error ||
+      nextProps.validation.syntaxError !== this.props.validation.syntaxError ||
+      nextProps.validation.isChanged !== this.props.validation.isChanged ||
+      nextProps.serverVersion !== this.props.serverVersion ||
+      nextProps.fields.length !== this.props.fields.length
+    );
+  }
+
+  /**
    * Unsubscribe listeners.
    */
   componentWillUnmount() {
@@ -115,6 +136,25 @@ class ValidationEditor extends Component {
    */
   onValidatorSave() {
     this.props.saveValidation(this.props.validation);
+  }
+
+  /**
+   * Save validator changes.
+   *
+   * @param {Object} validator - The validator.
+   */
+  onValidatorChange(validator) {
+    this.props.validatorChanged(validator);
+    this.updateSampleDocuments();
+  }
+
+  /**
+   * Update sample documents.
+   */
+  updateSampleDocuments() {
+    if (!this.props.validation.error && !this.props.validation.syntaxError) {
+      this.props.fetchSampleDocuments(this.props.validation.validator);
+    }
   }
 
   /**
@@ -133,23 +173,6 @@ class ValidationEditor extends Component {
 
       return { name, value, score: 1, meta: 'field', version: '0.0.0' };
     })
-
-  /**
-   * Should the component update?
-   *
-   * @param {Object} nextProps - The next properties.
-   *
-   * @returns {Boolean} If the component should update.
-   */
-  // shouldComponentUpdate(nextProps) {
-  //  return (
-  //    nextProps.validation.error !== this.props.validation.error ||
-  //    nextProps.validation.syntaxError !== this.props.validation.syntaxError ||
-  //    nextProps.validation.isChanged !== this.props.validation.isChanged ||
-  //    nextProps.serverVersion !== this.props.serverVersion ||
-  //    nextProps.fields.length !== this.props.fields.length
-  //  );
-  // }
 
   /**
    * Render action selector.
@@ -247,7 +270,7 @@ class ValidationEditor extends Component {
     if (this.props.validation.isChanged) {
       return (
         <div className={classnames(styles['validation-action-container'])}>
-          <div className={styles['validation-action-message']}>
+          <div className={classnames(styles['validation-action-message'])}>
             Validation modified
           </div>
           <TextButton
@@ -288,7 +311,7 @@ class ValidationEditor extends Component {
               width="100%"
               height="100%"
               value={this.props.validation.validator}
-              onChange={this.props.validatorChanged}
+              onChange={this.onValidatorChange.bind(this)}
               editorProps={{$blockScrolling: Infinity}}
               setOptions={OPTIONS}
               onFocus={() => tools.setCompleters([this.completer])} />

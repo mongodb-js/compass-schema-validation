@@ -6,7 +6,8 @@ import {
   validationFetched,
   validationSaved,
   validationActionChanged,
-  validationLevelChanged
+  validationLevelChanged,
+  fetchSampleDocuments
 } from 'modules/validation';
 import { reset, INITIAL_STATE } from '../modules/index';
 import javascriptStringify from 'javascript-stringify';
@@ -101,6 +102,19 @@ describe('Schema Validation Store', () => {
         validationLevel: 'moderate'
       };
 
+      it('updates the isLoading in state', () => {
+        const isLoading = true;
+
+        it('updates the validationAction in state', (done) => {
+          const unsubscribe = store.subscribe(() => {
+            unsubscribe();
+            expect(store.getState().sampleDocuments.isLoading).to.equal(isLoading);
+            done();
+          });
+          store.dispatch(fetchSampleDocuments({ matching: {}, notmatching: {}}));
+        });
+      });
+
       it('updates the validation in state', (done) => {
         const unsubscribe = store.subscribe(() => {
           const validator = javascriptStringify(validation.validator, null, 2);
@@ -185,7 +199,8 @@ describe('Schema Validation Store', () => {
             dataService: INITIAL_STATE.dataService,
             fields: INITIAL_STATE.fields,
             serverVersion: INITIAL_STATE.serverVersion,
-            validation: INITIAL_STATE.validation
+            validation: INITIAL_STATE.validation,
+            sampleDocuments: INITIAL_STATE.sampleDocuments
           });
         });
       });

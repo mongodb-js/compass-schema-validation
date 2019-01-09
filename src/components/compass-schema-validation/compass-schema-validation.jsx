@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
-import ValidationEditor from 'components/validation-editor';
 import { pick } from 'lodash';
+import ValidationEditor from 'components/validation-editor';
+import SampleDocuments from 'components/sample-documents';
 import {
   validatorChanged,
   validationCanceled,
@@ -12,6 +13,7 @@ import {
 } from 'modules/validation';
 import { namespaceChanged } from 'modules/namespace';
 import { openLink } from 'modules/link';
+import { fetchSampleDocuments } from 'modules/sample-documents';
 
 import styles from './compass-schema-validation.less';
 
@@ -25,6 +27,7 @@ class CompassSchemaValidation extends Component {
     return (
       <div className={classnames(styles.root)}>
         <ValidationEditor {...this.props} />
+        <SampleDocuments {...this.props} />
       </div>
     );
   }
@@ -39,7 +42,7 @@ class CompassSchemaValidation extends Component {
  */
 const mapStateToProps = (state) => pick(
   state,
-  ['serverVersion', 'validation', 'fields', 'namespace']
+  ['serverVersion', 'validation', 'fields', 'namespace', 'sampleDocuments']
 );
 
 /**
@@ -48,6 +51,7 @@ const mapStateToProps = (state) => pick(
 const MappedCompassSchemaValidation = connect(
   mapStateToProps,
   {
+    fetchSampleDocuments,
     validatorChanged,
     validationCanceled,
     saveValidation,

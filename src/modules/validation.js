@@ -2,6 +2,7 @@ const bson = require('bson');
 const Context = require('context-eval');
 const EJSON = require('mongodb-extended-json');
 const javascriptStringify = require('javascript-stringify');
+import { fetchSampleDocuments } from './sample-documents';
 
 import { defaults, isEqual, pick } from 'lodash';
 
@@ -123,7 +124,7 @@ function executeJavascript(input, sandbox) {
  *
  * @returns {Boolean} Is validator correct.
  */
-const checkValidator = (validator) => {
+export const checkValidator = (validator) => {
   const sandbox = getQuerySandbox();
   const validation = { syntaxError: null, validator };
 
@@ -179,14 +180,14 @@ const cancelValidation = (state) => ({
 });
 
 /**
- * Clears validation state after saving.
+ * Cleans validation state after saving.
  *
  * @param {Object} state - The state
  * @param {Object} action - The action.
  *
  * @returns {Object} The new state.
  */
-const updateValidation = (state, action) => ({
+const cleanValidation = (state, action) => ({
   ...state,
   isChanged: action.isChanged,
   syntaxError: null,
@@ -274,8 +275,8 @@ const MAPPINGS = {
   [VALIDATOR_CHANGED]: changeValidator,
   [VALIDATION_CANCELED]: cancelValidation,
   [VALIDATION_FETCHED]: setValidation,
-  [VALIDATION_SAVED]: updateValidation,
-  [VALIDATION_SAVE_FAILED]: updateValidation,
+  [VALIDATION_SAVED]: cleanValidation,
+  [VALIDATION_SAVE_FAILED]: cleanValidation,
   [VALIDATION_ACTION_CHANGED]: changeValidationAction,
   [VALIDATION_LEVEL_CHANGED]: changeValidationLevel
 };
@@ -388,6 +389,7 @@ export const fetchValidation = (namespace) => {
   return (dispatch, getState) => {
     const state = getState();
     const dataService = state.dataService.dataService;
+    let validator = '';
 
     if (dataService) {
       dataService.listCollections(
@@ -402,7 +404,7 @@ export const fetchValidation = (namespace) => {
           };
 
           if (!error && options) {
-            const validator = options.validator
+            validator = options.validator
               ? EJSON.stringify(options.validator, null, 2)
               : {};
 
@@ -416,7 +418,10 @@ export const fetchValidation = (namespace) => {
             );
           }
 
-          return dispatch(validationFetched(validation));
+          dispatch(validationFetched(validation));
+          dispatch(fetchSampleDocuments(validator));
+
+          return;
         }
       );
     }
