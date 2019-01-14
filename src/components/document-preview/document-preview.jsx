@@ -12,9 +12,7 @@ import styles from './document-preview.less';
 class DocumentPreview extends Component {
   static displayName = 'DocumentPreview';
 
-  static propTypes = {
-    document: PropTypes.object
-  }
+  static propTypes = { document: PropTypes.object }
 
   /**
    * Renders the document preview.

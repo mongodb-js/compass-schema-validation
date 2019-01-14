@@ -1,9 +1,9 @@
 import { checkValidator } from './validation';
 
 /**
- * Sample documents loaded action.
+ * Sample documents fetched action.
  */
-export const SAMPLE_DOCUMENTS_LOADED = 'validation/namespace/SAMPLE_DOCUMENTS_LOADED';
+export const SAMPLE_DOCUMENTS_FETCHED = 'validation/namespace/SAMPLE_DOCUMENTS_FETCHED';
 
 /**
  * Loading sample documents aciton name.
@@ -14,11 +14,6 @@ export const LOADING_SAMPLE_DOCUMENTS = 'validation/namespace/LOADING_SAMPLE_DOC
  * The initial state.
  */
 export const INITIAL_STATE = { matching: null, notmatching: null, isLoading: false };
-
-/**
- * Large limit of collection to scan.
- */
-export const LARGE_LIMIT = 100000;
 
 /**
  * Find options.
@@ -47,8 +42,8 @@ const refreshSampleDocuments = (state, action) => ({
  *
  * @returns {Object} Validation saved action.
  */
-export const sampleDocumentsLoaded = (sampleDocuments) => ({
-  type: SAMPLE_DOCUMENTS_LOADED,
+export const sampleDocumentsFetched = (sampleDocuments) => ({
+  type: SAMPLE_DOCUMENTS_FETCHED,
   matching: sampleDocuments.matching,
   notmatching: sampleDocuments.notmatching
 });
@@ -60,7 +55,7 @@ export const sampleDocumentsLoaded = (sampleDocuments) => ({
  *
  * @returns {Object} Validation saved action.
  */
-export const loadSampleDocuments = (state) => ({
+const loadSampleDocuments = (state) => ({
   ...state,
   type: LOADING_SAMPLE_DOCUMENTS,
   isLoading: true
@@ -78,7 +73,7 @@ export const loadingSampleDocuments = () => ({ type: LOADING_SAMPLE_DOCUMENTS })
  */
 const MAPPINGS = {};
 
-MAPPINGS[SAMPLE_DOCUMENTS_LOADED] = refreshSampleDocuments;
+MAPPINGS[SAMPLE_DOCUMENTS_FETCHED] = refreshSampleDocuments;
 MAPPINGS[LOADING_SAMPLE_DOCUMENTS] = loadSampleDocuments;
 
 /**
@@ -103,7 +98,7 @@ export const fetchSampleDocuments = (validator) => {
         if (!matchingError) {
           dataService.find(namespace, { '$nor': [ query ] }, OPTIONS, (notmatchingError, notmatching) => {
             if (!notmatchingError) {
-              return dispatch(sampleDocumentsLoaded({
+              return dispatch(sampleDocumentsFetched({
                 matching: matching[0] ? matching[0] : null,
                 notmatching: notmatching[0] ? notmatching[0] : null
               }));

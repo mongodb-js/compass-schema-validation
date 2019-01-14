@@ -7,6 +7,7 @@ import namespace, { INITIAL_STATE as NS_INITIAL_STATE, NAMESPACE_CHANGED } from 
 import serverVersion, { INITIAL_STATE as SV_INITIAL_STATE } from './server-version';
 import validation, { INITIAL_STATE as VALIDATION_STATE } from './validation';
 import sampleDocuments, { INITIAL_STATE as SAMPLE_DOCUMENTS_STATE } from './sample-documents';
+import isZeroState, { INITIAL_STATE as ZERO_STATE } from './zero-state';
 
 /**
  * Reset action constant.
@@ -23,7 +24,8 @@ export const INITIAL_STATE = {
   namespace: NS_INITIAL_STATE,
   serverVersion: SV_INITIAL_STATE,
   validation: VALIDATION_STATE,
-  sampleDocuments: SAMPLE_DOCUMENTS_STATE
+  sampleDocuments: SAMPLE_DOCUMENTS_STATE,
+  isZeroState: ZERO_STATE
 };
 
 /**
@@ -36,7 +38,8 @@ const appReducer = combineReducers({
   namespace,
   serverVersion,
   validation,
-  sampleDocuments
+  sampleDocuments,
+  isZeroState
 });
 
 /**

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import AceEditor from 'react-ace';
 import ace from 'brace';
+import debounce from 'lodash.debounce';
 import { ValidationAutoCompleter } from 'mongodb-ace-autocompleter';
 import { TextButton } from 'hadron-react-buttons';
 import { InfoSprinkle } from 'hadron-react-components';
@@ -72,7 +73,8 @@ class ValidationEditor extends Component {
       validationLevel: PropTypes.string.isRequired,
       isChanged: PropTypes.bool.isRequired,
       syntaxError: PropTypes.object,
-      error: PropTypes.object
+      error: PropTypes.object,
+      isEditable: PropTypes.bool.isRequired
     }),
     openLink: PropTypes.func.isRequired
   };
@@ -91,6 +93,7 @@ class ValidationEditor extends Component {
       textCompleter,
       props.fields
     );
+    this.debounceFetchSampleDocuments = debounce(this.props.fetchSampleDocuments, 750);
   }
 
   /**
@@ -119,6 +122,7 @@ class ValidationEditor extends Component {
       nextProps.validation.error !== this.props.validation.error ||
       nextProps.validation.syntaxError !== this.props.validation.syntaxError ||
       nextProps.validation.isChanged !== this.props.validation.isChanged ||
+      nextProps.validation.isEditable !== this.props.validation.isEditable ||
       nextProps.serverVersion !== this.props.serverVersion ||
       nextProps.fields.length !== this.props.fields.length
     );
@@ -153,7 +157,7 @@ class ValidationEditor extends Component {
    */
   updateSampleDocuments() {
     if (!this.props.validation.error && !this.props.validation.syntaxError) {
-      this.props.fetchSampleDocuments(this.props.validation.validator);
+      this.debounceFetchSampleDocuments(this.props.validation.validator);
     }
   }
 

@@ -1,8 +1,10 @@
-const bson = require('bson');
-const Context = require('context-eval');
-const EJSON = require('mongodb-extended-json');
-const javascriptStringify = require('javascript-stringify');
+import bson from 'bson';
+import Context from 'context-eval';
+import EJSON from 'mongodb-extended-json';
+import javascriptStringify from 'javascript-stringify';
+import { isEmpty } from 'lodash';
 import { fetchSampleDocuments } from './sample-documents';
+import { zeroStateChanged } from './zero-state';
 
 import { defaults, isEqual, pick } from 'lodash';
 
@@ -47,6 +49,11 @@ export const VALIDATION_ACTION_CHANGED = `${PREFIX}/VALIDATION_ACTION_CHANGED`;
 export const VALIDATION_LEVEL_CHANGED = `${PREFIX}/VALIDATION_LEVEL_CHANGED`;
 
 /**
+* Edit mode changed action name.
+*/
+export const EDIT_MODE_CHANGED = `${PREFIX}/EDIT_MODE_CHANGED`;
+
+/**
  * The initial state.
  */
 export const INITIAL_STATE = {
@@ -55,7 +62,8 @@ export const INITIAL_STATE = {
   validationLevel: 'strict',
   isChanged: false,
   syntaxError: null,
-  error: null
+  error: null,
+  isEditable: true
 };
 
 /**
@@ -269,6 +277,33 @@ const changeValidationLevel = (state, action) => {
 };
 
 /**
+ * Change edit mode.
+ *
+ * @param {Object} state - The state
+ * @param {Object} action - The action.
+ *
+ * @returns {Object} The new state.
+ */
+const changeEditMode = (state, action) => {
+  return {
+    ...state,
+    isEditable: action.isEditable
+  };
+};
+
+/**
+ * Action creator for edit mode changed events.
+ *
+ * @param {Boolean} isEditable - Is editable.
+ *
+ * @returns {Function} The function.
+ */
+export const editModeChanged = (isEditable) => ({
+  type: EDIT_MODE_CHANGED,
+  isEditable
+});
+
+/**
  * To not have a huge switch statement in the reducer.
  */
 const MAPPINGS = {
@@ -278,7 +313,8 @@ const MAPPINGS = {
   [VALIDATION_SAVED]: cleanValidation,
   [VALIDATION_SAVE_FAILED]: cleanValidation,
   [VALIDATION_ACTION_CHANGED]: changeValidationAction,
-  [VALIDATION_LEVEL_CHANGED]: changeValidationLevel
+  [VALIDATION_LEVEL_CHANGED]: changeValidationLevel,
+  [EDIT_MODE_CHANGED]: changeEditMode
 };
 
 /**
@@ -355,14 +391,11 @@ export const validationCanceled = () => ({
 /**
  * Action creator for validation saved events.
  *
- * @param {Object} validation - Validation.
- *
  * @returns {Object} Validation saved action.
  */
-export const validationSaved = (validation) => ({
+export const validationSaved = () => ({
   type: VALIDATION_SAVED,
-  isChanged: false,
-  validation
+  isChanged: false
 });
 
 /**
@@ -418,6 +451,10 @@ export const fetchValidation = (namespace) => {
             );
           }
 
+          if (!isEmpty(validator)) {
+            dispatch(zeroStateChanged());
+          }
+
           dispatch(validationFetched(validation));
           dispatch(fetchSampleDocuments(validator));
 
@@ -453,7 +490,7 @@ export const saveValidation = (validation) => {
         },
         (error) => {
           if (!error) {
-            return dispatch(validationSaved(validation));
+            return dispatch(validationSaved());
           }
 
           return dispatch(validationSaveFailed(error));
