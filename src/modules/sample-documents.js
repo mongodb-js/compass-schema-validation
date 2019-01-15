@@ -1,4 +1,4 @@
-import { checkValidator } from './validation';
+import { checkValidator, syntaxErrorOccurred } from './validation';
 
 /**
  * Sample documents fetched action.
@@ -95,16 +95,23 @@ export const fetchSampleDocuments = (validator) => {
 
     if (dataService) {
       dataService.find(namespace, query, OPTIONS, (matchingError, matching) => {
-        if (!matchingError) {
-          dataService.find(namespace, { '$nor': [ query ] }, OPTIONS, (notmatchingError, notmatching) => {
-            if (!notmatchingError) {
-              return dispatch(sampleDocumentsFetched({
-                matching: matching[0] ? matching[0] : null,
-                notmatching: notmatching[0] ? notmatching[0] : null
-              }));
-            }
-          });
+        if (matchingError) {
+          dispatch(syntaxErrorOccurred(matchingError));
+          dispatch(sampleDocumentsFetched({
+            matching: null,
+            notmatching: null
+          }));
+          return;
         }
+
+        dataService.find(namespace, { '$nor': [ query ] }, OPTIONS, (notmatchingError, notmatching) => {
+          if (!notmatchingError) {
+            return dispatch(sampleDocumentsFetched({
+              matching: matching[0] ? matching[0] : null,
+              notmatching: notmatching[0] ? notmatching[0] : null
+            }));
+          }
+        });
       });
     }
   };

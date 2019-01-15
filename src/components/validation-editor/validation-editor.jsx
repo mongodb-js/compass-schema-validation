@@ -272,23 +272,21 @@ class ValidationEditor extends Component {
    */
   renderActionsPanel() {
     if (this.props.validation.isChanged) {
+      const hasError = this.props.validation.syntaxError || this.props.validation.error;
+
       return (
         <div className={classnames(styles['validation-action-container'])}>
           <div className={classnames(styles['validation-action-message'])}>
             Validation modified
           </div>
           <TextButton
-            className={`btn btn-borderless btn-xs ${classnames(styles.cancel)}`}
+            className={`btn btn-default btn-xs ${classnames(styles.cancel)}`}
             text="Cancel"
             clickHandler={this.props.validationCanceled} />
-          {
-            this.props.validation.syntaxError || this.props.validation.error
-            ? null
-            : <TextButton
-              className={`btn btn-default btn-xs ${classnames(styles.update)}`}
+          <TextButton
+              className={`btn btn-primary btn-xs ${hasError ? 'disabled' : ''}`}
               text="Update"
               clickHandler={this.onValidatorSave.bind(this)} />
-          }
         </div>
       );
     }

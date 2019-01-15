@@ -54,6 +54,11 @@ export const VALIDATION_LEVEL_CHANGED = `${PREFIX}/VALIDATION_LEVEL_CHANGED`;
 export const EDIT_MODE_CHANGED = `${PREFIX}/EDIT_MODE_CHANGED`;
 
 /**
+* Syntax error occurred action name.
+*/
+export const SYNTAX_ERROR_OCCURRED = `${PREFIX}/SYNTAX_ERROR_OCCURRED`;
+
+/**
  * The initial state.
  */
 export const INITIAL_STATE = {
@@ -203,6 +208,20 @@ const cleanValidation = (state, action) => ({
 });
 
 /**
+* Sets syntax error.
+*
+* @param {Object} state - The state
+* @param {Object} action - The action.
+*
+* @returns {Object} The new state.
+*/
+const setSyntaxError = (state, action) => ({
+  ...state,
+  isChanged: true,
+  syntaxError: action.syntaxError
+});
+
+/**
  * Set validation.
  *
  * @param {Object} state - The state
@@ -314,7 +333,8 @@ const MAPPINGS = {
   [VALIDATION_SAVE_FAILED]: cleanValidation,
   [VALIDATION_ACTION_CHANGED]: changeValidationAction,
   [VALIDATION_LEVEL_CHANGED]: changeValidationLevel,
-  [EDIT_MODE_CHANGED]: changeEditMode
+  [EDIT_MODE_CHANGED]: changeEditMode,
+  [SYNTAX_ERROR_OCCURRED]: setSyntaxError
 };
 
 /**
@@ -409,6 +429,17 @@ export const validationSaveFailed = (error) => ({
   type: VALIDATION_SAVE_FAILED,
   isChanged: true,
   error
+});
+/**
+ * Action creator for syntax error occurred events.
+ *
+ * @param {Object} error - Syntax error value.
+ *
+ * @returns {Object} Syntax error occurred action.
+ */
+export const syntaxErrorOccurred = (syntaxError) => ({
+  type: SYNTAX_ERROR_OCCURRED,
+  syntaxError
 });
 
 /**
