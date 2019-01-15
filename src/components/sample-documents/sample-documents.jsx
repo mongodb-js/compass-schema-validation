@@ -30,7 +30,9 @@ class SampleDocuments extends Component {
    * @returns {Boolean} If the component should update.
    */
   shouldComponentUpdate(nextProps) {
-    return nextProps.sampleDocuments.isLoading !== this.props.sampleDocuments.isLoading;
+    return (
+      nextProps.sampleDocuments.isLoading !== this.props.sampleDocuments.isLoading
+    );
   }
 
   /**
