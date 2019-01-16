@@ -16,9 +16,9 @@ export const LOADING_SAMPLE_DOCUMENTS = 'validation/namespace/LOADING_SAMPLE_DOC
 export const INITIAL_STATE = { matching: null, notmatching: null, isLoading: false };
 
 /**
- * Find options.
+ * Collection max limit.
  */
-const OPTIONS = { maxTimeMS: 5000, limit: 1 };
+const MAX_LIMIT = 100000;
 
 /**
  * Refresh sample document.
@@ -92,11 +92,12 @@ export const fetchSampleDocuments = (validator) => {
     const namespace = state.namespace.ns;
     const checkedValidator = checkValidator(validator);
     const query = checkValidator(checkedValidator.validator).validator;
+    const options = {};
 
     if (dataService) {
-      dataService.find(namespace, query, OPTIONS, (matchingError, matching) => {
-        if (matchingError) {
-          dispatch(syntaxErrorOccurred(matchingError));
+      dataService.count(namespace, query, {}, (countError, count) => {
+        if (countError) {
+          dispatch(syntaxErrorOccurred(countError));
           dispatch(sampleDocumentsFetched({
             matching: null,
             notmatching: null
@@ -104,12 +105,20 @@ export const fetchSampleDocuments = (validator) => {
           return;
         }
 
-        dataService.find(namespace, { '$nor': [ query ] }, OPTIONS, (notmatchingError, notmatching) => {
-          if (!notmatchingError) {
-            return dispatch(sampleDocumentsFetched({
-              matching: matching[0] ? matching[0] : null,
-              notmatching: notmatching[0] ? notmatching[0] : null
-            }));
+        if (count > MAX_LIMIT) {
+          options.limit = MAX_LIMIT;
+        }
+
+        dataService.find(namespace, query, options, (matchingError, matching) => {
+          if (!matchingError) {
+            dataService.find(namespace, { '$nor': [ query ] }, options, (notmatchingError, notmatching) => {
+              if (!notmatchingError) {
+                return dispatch(sampleDocumentsFetched({
+                  matching: matching[0] ? matching[0] : null,
+                  notmatching: notmatching[0] ? notmatching[0] : null
+                }));
+              }
+            });
           }
         });
       });
