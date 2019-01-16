@@ -21,6 +21,11 @@ export const INITIAL_STATE = { matching: null, notmatching: null, isLoading: fal
 const MAX_LIMIT = 100000;
 
 /**
+ * Max time to search within collection.
+ */
+const MAX_TIME = 5000;
+
+/**
  * Refresh sample document.
  *
  * @param {Object} state - The state
@@ -79,6 +84,21 @@ MAPPINGS[LOADING_SAMPLE_DOCUMENTS] = loadSampleDocuments;
 /**
  * Fetch sample documents.
  *
+ * @param {Function} dispatch - Dispatch.
+ * @param {Object} error - Error.
+ */
+const returnNoDocuments = (dispatch, error) => {
+  dispatch(syntaxErrorOccurred(error));
+  dispatch(sampleDocumentsFetched({
+    matching: null,
+    notmatching: null
+  }));
+  return;
+};
+
+/**
+ * Fetch sample documents.
+ *
  * @param {Object} validator - Validator.
  *
  * @returns {Function} The function.
@@ -92,34 +112,53 @@ export const fetchSampleDocuments = (validator) => {
     const namespace = state.namespace.ns;
     const checkedValidator = checkValidator(validator);
     const query = checkValidator(checkedValidator.validator).validator;
-    const options = {};
+    const options = { maxTimeMS: MAX_TIME, allowDiskUse: true };
+    const pipelineMatch = [{ $match: query }, { $limit: 1 }];
+    const pipelineNotMatch = [
+      { $match: { '$nor': [ query ] } },
+      { $limit: 1 }
+    ];
 
     if (dataService) {
       dataService.count(namespace, query, {}, (countError, count) => {
         if (countError) {
-          dispatch(syntaxErrorOccurred(countError));
-          dispatch(sampleDocumentsFetched({
-            matching: null,
-            notmatching: null
-          }));
-          return;
+          return returnNoDocuments(dispatch, countError);
         }
 
         if (count > MAX_LIMIT) {
-          options.limit = MAX_LIMIT;
+          pipelineMatch.unshift({ $limit: MAX_LIMIT });
+          pipelineNotMatch.unshift({ $limit: MAX_LIMIT });
         }
 
-        dataService.find(namespace, query, options, (matchingError, matching) => {
-          if (!matchingError) {
-            dataService.find(namespace, { '$nor': [ query ] }, options, (notmatchingError, notmatching) => {
-              if (!notmatchingError) {
+        dataService.aggregate(namespace, pipelineMatch, options, (matchingError, matchCursor) => {
+          if (matchingError) {
+            return returnNoDocuments(dispatch, matchingError);
+          }
+
+          matchCursor.toArray((matchToArrayError, matching) => {
+            if (matchToArrayError) {
+              return returnNoDocuments(dispatch, matchToArrayError);
+            }
+            dataService.aggregate(namespace, pipelineNotMatch, options, (notmatchingError, notmatchCursor) => {
+              if (notmatchingError) {
+                return returnNoDocuments(dispatch, notmatchingError);
+              }
+
+              notmatchCursor.toArray((notmatchToArrayError, notmatching) => {
+                if (notmatchToArrayError) {
+                  return returnNoDocuments(dispatch, notmatchToArrayError);
+                }
+
+                notmatchCursor.close();
+
                 return dispatch(sampleDocumentsFetched({
                   matching: matching[0] ? matching[0] : null,
                   notmatching: notmatching[0] ? notmatching[0] : null
                 }));
-              }
+              });
             });
-          }
+            matchCursor.close();
+          });
         });
       });
     }
