@@ -2,7 +2,7 @@
 /**
  * Zero state changed action.
  */
-export const ZERO_STATE_CHANGED = 'validation/namespace/ZERO_STATE_CHANGED';
+export const IS_ZERO_STATE_CHANGED = 'validation/namespace/IS_ZERO_STATE_CHANGED';
 
 /**
  * The initial state.
@@ -18,7 +18,7 @@ export const INITIAL_STATE = true;
  * @returns {String} The new state.
  */
 export default function reducer(state = INITIAL_STATE, action) {
-  if (action.type === ZERO_STATE_CHANGED) {
+  if (action.type === IS_ZERO_STATE_CHANGED) {
     return action.isZeroState;
   }
 
@@ -33,6 +33,6 @@ export default function reducer(state = INITIAL_STATE, action) {
  * @returns {Object} The namespace changed action.
  */
 export const zeroStateChanged = () => ({
-  type: ZERO_STATE_CHANGED,
+  type: IS_ZERO_STATE_CHANGED,
   isZeroState: false
 });

@@ -10,7 +10,7 @@ describe('ValidationSelector [Component]', () => {
   const bsSize = 'xs';
   const options = { warn: 'Warning', error: 'Error' };
   const label = [
-    <span key="validation-action-span">Validation Action</span>,
+    <span key="validation-action-label">Validation Action</span>,
     <p key="validation-action-description">Description</p>
   ];
   const title = 'Warning';

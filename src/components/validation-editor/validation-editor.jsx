@@ -153,10 +153,19 @@ class ValidationEditor extends Component {
   }
 
   /**
+   * Checks if there is any error.
+   *
+   * @returns {Boolean} True if there is an error.
+   */
+  hasErrors() {
+    return (this.props.validation.error || this.props.validation.syntaxError);
+  }
+
+  /**
    * Update sample documents.
    */
   updateSampleDocuments() {
-    if (!this.props.validation.error && !this.props.validation.syntaxError) {
+    if (!this.hasErrors()) {
       this.debounceFetchSampleDocuments(this.props.validation.validator);
     }
   }
@@ -185,7 +194,7 @@ class ValidationEditor extends Component {
    */
   renderActionSelector() {
     const label = [
-      <span key="validation-action-span">Validation Action</span>,
+      <span key="validation-action-label">Validation Action</span>,
       <InfoSprinkle
         key="validation-action-sprinkle"
         helpLink={ACTION_HELP_URL}

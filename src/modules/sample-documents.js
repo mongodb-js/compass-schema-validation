@@ -21,11 +21,6 @@ export const INITIAL_STATE = { matching: null, notmatching: null, isLoading: fal
 const MAX_LIMIT = 100000;
 
 /**
- * Max time to search within collection.
- */
-const MAX_TIME = 5000;
-
-/**
  * Refresh sample document.
  *
  * @param {Object} state - The state
@@ -99,6 +94,43 @@ const zeroDocuments = (dispatch, error) => {
 /**
  * Fetch sample documents.
  *
+ * @param {Object} docsOptions - Collection of auxiliary options.
+ * @param {Function} callback - Callback function that returns
+ * matching or not mathing document.
+ */
+const getSampleDocuments = (docsOptions, callback) => {
+  const aggOptions = { allowDiskUse: true };
+  const pipeline = docsOptions.pipeline;
+
+  if (docsOptions.count > MAX_LIMIT) {
+    pipeline.unshift({ $limit: MAX_LIMIT });
+  }
+
+  docsOptions.dataService.aggregate(
+    docsOptions.namespace,
+    docsOptions.pipeline,
+    aggOptions,
+    (aggError, cursor) => {
+      if (aggError) {
+        return zeroDocuments(docsOptions.dispatch, aggError);
+      }
+
+      cursor.toArray((toArrayError, documents) => {
+        if (toArrayError) {
+          return zeroDocuments(docsOptions.dispatch, toArrayError);
+        }
+
+        cursor.close();
+
+        return callback(documents);
+      });
+    }
+  );
+};
+
+/**
+ * Fetch sample documents.
+ *
  * @param {Object} validator - Validator.
  *
  * @returns {Function} The function.
@@ -112,12 +144,7 @@ export const fetchSampleDocuments = (validator) => {
     const namespace = state.namespace.ns;
     const checkedValidator = checkValidator(validator);
     const query = checkValidator(checkedValidator.validator).validator;
-    const options = { maxTimeMS: MAX_TIME, allowDiskUse: true };
-    const pipelineMatch = [{ $match: query }, { $limit: 1 }];
-    const pipelineNotMatch = [
-      { $match: { '$nor': [ query ] } },
-      { $limit: 1 }
-    ];
+    const pipeline = [{ $match: query }, { $limit: 1 }];
 
     if (dataService) {
       dataService.count(namespace, query, {}, (countError, count) => {
@@ -125,52 +152,26 @@ export const fetchSampleDocuments = (validator) => {
           return zeroDocuments(dispatch, countError);
         }
 
-        if (count > MAX_LIMIT) {
-          pipelineMatch.unshift({ $limit: MAX_LIMIT });
-          pipelineNotMatch.unshift({ $limit: MAX_LIMIT });
-        }
-
-        dataService.aggregate(
+        const docsOptions = {
+          pipeline,
           namespace,
-          pipelineMatch,
-          options,
-          (matchingError, matchCursor) => {
-            if (matchingError) {
-              return zeroDocuments(dispatch, matchingError);
-            }
+          dispatch,
+          dataService,
+          count
+        };
 
-            matchCursor.toArray((matchToArrayError, matching) => {
-              if (matchToArrayError) {
-                return zeroDocuments(dispatch, matchToArrayError);
-              }
-
-              dataService.aggregate(
-                namespace,
-                pipelineNotMatch,
-                options,
-                (notmatchingError, notmatchCursor) => {
-                  if (notmatchingError) {
-                    return zeroDocuments(dispatch, notmatchingError);
-                  }
-
-                  notmatchCursor.toArray((notmatchToArrayError, notmatching) => {
-                    if (notmatchToArrayError) {
-                      return zeroDocuments(dispatch, notmatchToArrayError);
-                    }
-
-                    notmatchCursor.close();
-
-                    return dispatch(sampleDocumentsFetched({
-                      matching: matching[0] ? matching[0] : null,
-                      notmatching: notmatching[0] ? notmatching[0] : null
-                    }));
-                  });
-                }
-              );
-              matchCursor.close();
-            });
-          }
-        );
+        getSampleDocuments(docsOptions, (matching) => {
+          docsOptions.pipeline = [
+            { $match: { '$nor': [ query ] } },
+            { $limit: 1 }
+          ];
+          getSampleDocuments(docsOptions, (notmatching) => {
+            return dispatch(sampleDocumentsFetched({
+              matching: matching[0] ? matching[0] : null,
+              notmatching: notmatching[0] ? notmatching[0] : null
+            }));
+          });
+        });
       });
     }
   };

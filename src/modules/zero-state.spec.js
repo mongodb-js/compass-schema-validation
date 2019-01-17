@@ -1,13 +1,13 @@
 import reducer, {
   zeroStateChanged,
-  ZERO_STATE_CHANGED
+  IS_ZERO_STATE_CHANGED
 } from 'modules/zero-state';
 
 describe('zero-state module', () => {
   describe('#zeroStateChanged', () => {
-    it('returns the ZERO_STATE_CHANGED action', () => {
+    it('returns the IS_ZERO_STATE_CHANGED action', () => {
       expect(zeroStateChanged()).to.deep.equal({
-        type: ZERO_STATE_CHANGED,
+        type: IS_ZERO_STATE_CHANGED,
         isZeroState: false
       });
     });
