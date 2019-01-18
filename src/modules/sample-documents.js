@@ -13,7 +13,7 @@ export const LOADING_SAMPLE_DOCUMENTS = 'validation/namespace/LOADING_SAMPLE_DOC
 /**
  * The initial state.
  */
-export const INITIAL_STATE = { matching: null, notmatching: null, isLoading: false };
+export const INITIAL_STATE = { isLoading: false };
 
 /**
  * Collection max limit.
@@ -77,19 +77,26 @@ MAPPINGS[SAMPLE_DOCUMENTS_FETCHED] = refreshSampleDocuments;
 MAPPINGS[LOADING_SAMPLE_DOCUMENTS] = loadSampleDocuments;
 
 /**
- * Returns zero documents.
+ * Sets zero documents.
+ *
+ * @param {Function} dispatch - Dispatch.
+ *
+ * @returns {Function} The function.
+ */
+const setZeroDocuments = (dispatch) => dispatch(sampleDocumentsFetched({
+  matching: undefined,
+  notmatching: undefined
+}));
+
+/**
+ * Sets syntax error.
  *
  * @param {Function} dispatch - Dispatch.
  * @param {Object} error - Error.
+ *
+ * @returns {Function} The function.
  */
-const zeroDocuments = (dispatch, error) => {
-  dispatch(syntaxErrorOccurred(error));
-  dispatch(sampleDocumentsFetched({
-    matching: null,
-    notmatching: null
-  }));
-  return;
-};
+const setSyntaxError = (dispatch, error) => dispatch(syntaxErrorOccurred(error));
 
 /**
  * Fetch sample documents.
@@ -112,12 +119,18 @@ const getSampleDocuments = (docsOptions, callback) => {
     aggOptions,
     (aggError, cursor) => {
       if (aggError) {
-        return zeroDocuments(docsOptions.dispatch, aggError);
+        setZeroDocuments(docsOptions.dispatch);
+        setSyntaxError(docsOptions.dispatch, aggError);
+
+        return;
       }
 
       cursor.toArray((toArrayError, documents) => {
         if (toArrayError) {
-          return zeroDocuments(docsOptions.dispatch, toArrayError);
+          setZeroDocuments(docsOptions.dispatch);
+          setSyntaxError(docsOptions.dispatch, toArrayError);
+
+          return;
         }
 
         cursor.close();
@@ -132,12 +145,17 @@ const getSampleDocuments = (docsOptions, callback) => {
  * Fetch sample documents.
  *
  * @param {Object} validator - Validator.
+ * @param {Object} error - Error.
  *
  * @returns {Function} The function.
  */
-export const fetchSampleDocuments = (validator) => {
+export const fetchSampleDocuments = (validator, error) => {
   return (dispatch, getState) => {
     dispatch(loadingSampleDocuments());
+
+    if (error) {
+      return setZeroDocuments(dispatch);
+    }
 
     const state = getState();
     const dataService = state.dataService.dataService;
@@ -149,7 +167,10 @@ export const fetchSampleDocuments = (validator) => {
     if (dataService) {
       dataService.count(namespace, query, {}, (countError, count) => {
         if (countError) {
-          return zeroDocuments(dispatch, countError);
+          setZeroDocuments(dispatch);
+          setSyntaxError(dispatch, countError);
+
+          return;
         }
 
         const docsOptions = {
@@ -167,8 +188,8 @@ export const fetchSampleDocuments = (validator) => {
           ];
           getSampleDocuments(docsOptions, (notmatching) => {
             return dispatch(sampleDocumentsFetched({
-              matching: matching[0] ? matching[0] : null,
-              notmatching: notmatching[0] ? notmatching[0] : null
+              matching: matching[0],
+              notmatching: notmatching[0]
             }));
           });
         });

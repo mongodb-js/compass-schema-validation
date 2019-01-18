@@ -165,9 +165,10 @@ class ValidationEditor extends Component {
    * Update sample documents.
    */
   updateSampleDocuments() {
-    if (!this.hasErrors()) {
-      this.debounceFetchSampleDocuments(this.props.validation.validator);
-    }
+    this.debounceFetchSampleDocuments(
+      this.props.validation.validator,
+      this.hasErrors()
+    );
   }
 
   /**

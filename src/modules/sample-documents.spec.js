@@ -16,8 +16,6 @@ describe('sample-documents module', () => {
     context('when the action is not presented in sample-documents module', () => {
       it('returns the default state', () => {
         expect(reducer(undefined, { type: 'test' })).to.deep.equal({
-          matching: null,
-          notmatching: null,
           isLoading: false
         });
       });
