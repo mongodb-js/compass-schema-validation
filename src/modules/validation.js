@@ -135,10 +135,16 @@ export const checkValidator = (validator) => {
   const sandbox = getQuerySandbox();
   const validation = { syntaxError: null, validator };
 
-  try {
-    validation.validator = executeJavascript(validator, sandbox);
-  } catch (error) {
-    validation.syntaxError = error;
+  if (validator === '') {
+    validation.syntaxError = {
+      message: 'The validator must be an object.'
+    };
+  } else {
+    try {
+      validation.validator = executeJavascript(validator, sandbox);
+    } catch (error) {
+      validation.syntaxError = error;
+    }
   }
 
   return validation;
