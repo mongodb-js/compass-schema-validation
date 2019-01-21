@@ -126,8 +126,7 @@ describe('Schema Validation Store', () => {
               validator,
               validationAction: 'warn',
               validationLevel: 'moderate'
-            },
-            isEditable: true
+            }
           };
 
           unsubscribe();
@@ -195,7 +194,8 @@ describe('Schema Validation Store', () => {
             serverVersion: INITIAL_STATE.serverVersion,
             validation: INITIAL_STATE.validation,
             sampleDocuments: INITIAL_STATE.sampleDocuments,
-            isZeroState: INITIAL_STATE.isZeroState
+            isZeroState: INITIAL_STATE.isZeroState,
+            isEditable: INITIAL_STATE.isEditable
           });
         });
       });

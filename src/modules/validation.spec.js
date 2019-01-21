@@ -120,8 +120,7 @@ describe('validation module', () => {
           validationLevel: 'strict',
           isChanged: false,
           syntaxError: null,
-          error: null,
-          isEditable: true
+          error: null
         });
       });
     });
@@ -209,8 +208,7 @@ describe('validation module', () => {
           validationAction: 'warning',
           validationLevel: 'off',
           syntaxError: null,
-          error: null,
-          isEditable: true
+          error: null
         });
       });
     });
@@ -225,8 +223,7 @@ describe('validation module', () => {
           validationLevel: 'strict',
           isChanged: false,
           syntaxError: null,
-          error: null,
-          isEditable: true
+          error: null
         });
       });
     });
@@ -241,8 +238,7 @@ describe('validation module', () => {
           validationLevel: 'strict',
           isChanged: true,
           syntaxError: null,
-          error: { message: 'Error!' },
-          isEditable: true
+          error: { message: 'Error!' }
         });
       });
     });
@@ -257,8 +253,7 @@ describe('validation module', () => {
           validationLevel: 'strict',
           isChanged: true,
           syntaxError: { message: 'Syntax Error!' },
-          error: null,
-          isEditable: true
+          error: null
         });
       });
     });

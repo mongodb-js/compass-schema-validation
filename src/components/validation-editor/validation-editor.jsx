@@ -73,8 +73,7 @@ class ValidationEditor extends Component {
       validationLevel: PropTypes.string.isRequired,
       isChanged: PropTypes.bool.isRequired,
       syntaxError: PropTypes.object,
-      error: PropTypes.object,
-      isEditable: PropTypes.bool.isRequired
+      error: PropTypes.object
     }),
     openLink: PropTypes.func.isRequired
   };
@@ -122,7 +121,6 @@ class ValidationEditor extends Component {
       nextProps.validation.error !== this.props.validation.error ||
       nextProps.validation.syntaxError !== this.props.validation.syntaxError ||
       nextProps.validation.isChanged !== this.props.validation.isChanged ||
-      nextProps.validation.isEditable !== this.props.validation.isEditable ||
       nextProps.serverVersion !== this.props.serverVersion ||
       nextProps.fields.length !== this.props.fields.length
     );
@@ -250,7 +248,7 @@ class ValidationEditor extends Component {
    * @returns {React.Component} The component.
    */
   renderValidationMessage() {
-    if (this.props.validation.error || this.props.validation.syntaxError) {
+    if (this.hasErrors()) {
       let message = '';
       let colorStyle = '';
 
@@ -282,8 +280,6 @@ class ValidationEditor extends Component {
    */
   renderActionsPanel() {
     if (this.props.validation.isChanged) {
-      const hasError = this.props.validation.syntaxError || this.props.validation.error;
-
       return (
         <div className={classnames(styles['validation-action-container'])}>
           <div className={classnames(styles['validation-action-message'])}>
@@ -294,7 +290,7 @@ class ValidationEditor extends Component {
             text="Cancel"
             clickHandler={this.props.validationCanceled} />
           <TextButton
-              className={`btn btn-primary btn-xs ${hasError ? 'disabled' : ''}`}
+              className={`btn btn-primary btn-xs ${this.hasErrors() ? 'disabled' : ''}`}
               text="Update"
               clickHandler={this.onValidatorSave.bind(this)} />
         </div>

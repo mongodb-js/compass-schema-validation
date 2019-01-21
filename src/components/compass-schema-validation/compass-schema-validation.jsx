@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { pick } from 'lodash';
 import PropTypes from 'prop-types';
-import { ZeroState } from 'hadron-react-components';
+import { ZeroState, StatusRow } from 'hadron-react-components';
 import { TextButton } from 'hadron-react-buttons';
 import ValidationEditor from 'components/validation-editor';
 import SampleDocuments from 'components/sample-documents';
@@ -21,6 +21,11 @@ import { fetchSampleDocuments } from 'modules/sample-documents';
 import { zeroStateChanged } from 'modules/zero-state';
 
 import styles from './compass-schema-validation.less';
+
+/**
+ * Warning for the status row.
+ */
+const READ_ONLY_WARNING = 'Schema validation on readonly views are not supported.';
 
 /**
  * Header for zero state.
@@ -45,7 +50,8 @@ class CompassSchemaValidation extends Component {
 
   static propTypes = {
     isZeroState: PropTypes.bool.isRequired,
-    zeroStateChanged: PropTypes.func.isRequired
+    zeroStateChanged: PropTypes.func.isRequired,
+    isEditable: PropTypes.bool.isRequired
   }
 
   /**
@@ -56,12 +62,23 @@ class CompassSchemaValidation extends Component {
   }
 
   /**
+   * Render banner with information.
+   *
+   * @returns {React.Component} The component.
+   */
+  renderBanner() {
+    if (!this.props.isEditable) {
+      return (<StatusRow style="warning">{READ_ONLY_WARNING}</StatusRow>);
+    }
+  }
+
+  /**
    * Render the schema validation component zero state.
    *
    * @returns {React.Component} The component.
    */
   renderZeroState() {
-    if (this.props.isZeroState) {
+    if (this.props.isZeroState || !this.props.isEditable) {
       return (
           <div className={classnames(styles['zero-state-container'])}>
             <ZeroGraphic />
@@ -69,7 +86,9 @@ class CompassSchemaValidation extends Component {
               <div className={classnames(styles['zero-state-action'])}>
                 <div>
                   <TextButton
-                    className="btn btn-primary btn-lg"
+                    className={`btn btn-primary btn-lg ${
+                      !this.props.isEditable ? 'disabled' : ''
+                    }`}
                     text="Add Rule"
                     clickHandler={this.onZeroStateChanged.bind(this)} />
                 </div>
@@ -92,7 +111,7 @@ class CompassSchemaValidation extends Component {
    * @returns {React.Component} The component.
    */
   renderContent() {
-    if (!this.props.isZeroState) {
+    if (!this.props.isZeroState && this.props.isEditable) {
       return (
         <div className={classnames(styles['content-container'])}>
           <ValidationEditor {...this.props} />
@@ -110,6 +129,7 @@ class CompassSchemaValidation extends Component {
   render() {
     return (
       <div className={classnames(styles.root)}>
+        {this.renderBanner()}
         {this.renderZeroState()}
         {this.renderContent()}
       </div>
@@ -126,7 +146,15 @@ class CompassSchemaValidation extends Component {
  */
 const mapStateToProps = (state) => pick(
   state,
-  ['serverVersion', 'validation', 'fields', 'namespace', 'sampleDocuments', 'isZeroState']
+  [
+    'serverVersion',
+    'validation',
+    'fields',
+    'namespace',
+    'sampleDocuments',
+    'isZeroState',
+    'isEditable'
+  ]
 );
 
 /**

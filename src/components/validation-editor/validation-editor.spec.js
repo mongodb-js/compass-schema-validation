@@ -23,8 +23,7 @@ describe('ValidationEditor [Component]', () => {
     validationLevel: 'moderate',
     isChanged: false,
     syntaxError: null,
-    error: null,
-    isEditable: true
+    error: null
   };
   const appRegistry = new AppRegistry();
 

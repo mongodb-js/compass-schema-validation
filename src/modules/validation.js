@@ -49,11 +49,6 @@ export const VALIDATION_ACTION_CHANGED = `${PREFIX}/VALIDATION_ACTION_CHANGED`;
 export const VALIDATION_LEVEL_CHANGED = `${PREFIX}/VALIDATION_LEVEL_CHANGED`;
 
 /**
-* Edit mode changed action name.
-*/
-export const EDIT_MODE_CHANGED = `${PREFIX}/EDIT_MODE_CHANGED`;
-
-/**
 * Syntax error occurred action name.
 */
 export const SYNTAX_ERROR_OCCURRED = `${PREFIX}/SYNTAX_ERROR_OCCURRED`;
@@ -67,8 +62,7 @@ export const INITIAL_STATE = {
   validationLevel: 'strict',
   isChanged: false,
   syntaxError: null,
-  error: null,
-  isEditable: true
+  error: null
 };
 
 /**
@@ -296,33 +290,6 @@ const changeValidationLevel = (state, action) => {
 };
 
 /**
- * Change edit mode.
- *
- * @param {Object} state - The state
- * @param {Object} action - The action.
- *
- * @returns {Object} The new state.
- */
-const changeEditMode = (state, action) => {
-  return {
-    ...state,
-    isEditable: action.isEditable
-  };
-};
-
-/**
- * Action creator for edit mode changed events.
- *
- * @param {Boolean} isEditable - Is editable.
- *
- * @returns {Function} The function.
- */
-export const editModeChanged = (isEditable) => ({
-  type: EDIT_MODE_CHANGED,
-  isEditable
-});
-
-/**
  * To not have a huge switch statement in the reducer.
  */
 const MAPPINGS = {
@@ -333,7 +300,6 @@ const MAPPINGS = {
   [VALIDATION_SAVE_FAILED]: cleanValidation,
   [VALIDATION_ACTION_CHANGED]: changeValidationAction,
   [VALIDATION_LEVEL_CHANGED]: changeValidationLevel,
-  [EDIT_MODE_CHANGED]: changeEditMode,
   [SYNTAX_ERROR_OCCURRED]: setSyntaxError
 };
 
@@ -433,7 +399,7 @@ export const validationSaveFailed = (error) => ({
 /**
  * Action creator for syntax error occurred events.
  *
- * @param {Object} error - Syntax error value.
+ * @param {Object} syntaxError - Syntax error value.
  *
  * @returns {Object} Syntax error occurred action.
  */

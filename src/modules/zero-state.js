@@ -28,9 +28,7 @@ export default function reducer(state = INITIAL_STATE, action) {
 /**
  * Action creator for zero state changed events.
  *
- * @param {Boolean} isZeroState - Is zero state.
- *
- * @returns {Object} The namespace changed action.
+ * @returns {Object} The zero state changed action.
  */
 export const zeroStateChanged = () => ({
   type: IS_ZERO_STATE_CHANGED,
