@@ -96,17 +96,6 @@ class ValidationEditor extends Component {
   }
 
   /**
-   * Subscribe listeners.
-   */
-  componentDidMount() {
-    this.unsubFields = global.hadronApp.appRegistry
-      .getStore('Field.Store')
-      .listen((fields) => this.completer.update(
-        this.processFields(fields.fields)
-      ));
-  }
-
-  /**
    * Should the component update?
    *
    * @param {Object} nextProps - The next properties.
@@ -124,6 +113,14 @@ class ValidationEditor extends Component {
       nextProps.serverVersion !== this.props.serverVersion ||
       nextProps.fields.length !== this.props.fields.length
     );
+  }
+
+  /**
+   * If there are new fields update autocompleter with new fields.
+   */
+  componentDidUpdate() {
+    this.completer.update(this.props.fields);
+    this.completer.version = this.props.serverVersion;
   }
 
   /**
