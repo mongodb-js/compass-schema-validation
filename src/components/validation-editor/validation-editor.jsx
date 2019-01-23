@@ -63,7 +63,7 @@ class ValidationEditor extends Component {
     validatorChanged: PropTypes.func.isRequired,
     validationActionChanged: PropTypes.func.isRequired,
     validationLevelChanged: PropTypes.func.isRequired,
-    validationCanceled: PropTypes.func.isRequired,
+    cancelValidation: PropTypes.func.isRequired,
     saveValidation: PropTypes.func.isRequired,
     serverVersion: PropTypes.string.isRequired,
     fields: PropTypes.array,
@@ -124,13 +124,6 @@ class ValidationEditor extends Component {
   }
 
   /**
-   * Unsubscribe listeners.
-   */
-  componentWillUnmount() {
-    this.unsubFields();
-  }
-
-  /**
    * Save validator changes.
    */
   onValidatorSave() {
@@ -165,23 +158,6 @@ class ValidationEditor extends Component {
       this.hasErrors()
     );
   }
-
-  /**
-   * Handles converting the field list to an ACE friendly format.
-   *
-   * @param {Object} fields - The fields.
-   *
-   * @returns {Array} The field list.
-   */
-  processFields = (fields) => Object
-    .keys(fields)
-    .map((name) => {
-      const value = (name.indexOf('.') > -1 || name.indexOf(' ') > -1)
-        ? `"${name}"`
-        : name;
-
-      return { name, value, score: 1, meta: 'field', version: '0.0.0' };
-    })
 
   /**
    * Render action selector.
@@ -285,7 +261,7 @@ class ValidationEditor extends Component {
           <TextButton
             className={`btn btn-default btn-xs ${classnames(styles.cancel)}`}
             text="Cancel"
-            clickHandler={this.props.validationCanceled} />
+            clickHandler={this.props.cancelValidation} />
           <TextButton
               className={`btn btn-primary btn-xs ${this.hasErrors() ? 'disabled' : ''}`}
               text="Update"

@@ -10,7 +10,7 @@ import SampleDocuments from 'components/sample-documents';
 import { ZeroGraphic } from 'components/zero-graphic';
 import {
   validatorChanged,
-  validationCanceled,
+  cancelValidation,
   saveValidation,
   validationActionChanged,
   validationLevelChanged
@@ -18,7 +18,7 @@ import {
 import { namespaceChanged } from 'modules/namespace';
 import { openLink } from 'modules/link';
 import { fetchSampleDocuments } from 'modules/sample-documents';
-import { zeroStateChanged } from 'modules/zero-state';
+import { changeZeroState, zeroStateChanged } from 'modules/zero-state';
 
 import styles from './compass-schema-validation.less';
 
@@ -50,15 +50,9 @@ class CompassSchemaValidation extends Component {
 
   static propTypes = {
     isZeroState: PropTypes.bool.isRequired,
+    changeZeroState: PropTypes.func.isRequired,
     zeroStateChanged: PropTypes.func.isRequired,
     isEditable: PropTypes.bool.isRequired
-  }
-
-  /**
-   * Change zero state to false.
-   */
-  onZeroStateChanged() {
-    this.props.zeroStateChanged();
   }
 
   /**
@@ -90,7 +84,7 @@ class CompassSchemaValidation extends Component {
                       !this.props.isEditable ? 'disabled' : ''
                     }`}
                     text="Add Rule"
-                    clickHandler={this.onZeroStateChanged.bind(this)} />
+                    clickHandler={this.props.changeZeroState} />
                 </div>
                 <a
                   className={classnames(styles['zero-state-link'])}
@@ -165,13 +159,14 @@ const MappedCompassSchemaValidation = connect(
   {
     fetchSampleDocuments,
     validatorChanged,
-    validationCanceled,
+    cancelValidation,
     saveValidation,
     namespaceChanged,
     validationActionChanged,
     validationLevelChanged,
     openLink,
-    zeroStateChanged
+    zeroStateChanged,
+    changeZeroState
   },
 )(CompassSchemaValidation);
 
