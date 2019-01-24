@@ -2,7 +2,6 @@ import bson from 'bson';
 import Context from 'context-eval';
 import EJSON from 'mongodb-extended-json';
 import javascriptStringify from 'javascript-stringify';
-import { isEmpty } from 'lodash';
 import { fetchSampleDocuments } from './sample-documents';
 import { zeroStateChanged } from './zero-state';
 import { appRegistryEmit } from 'modules/app-registry';
@@ -418,11 +417,10 @@ export const fetchValidation = (namespace) => {
     const state = getState();
     const dataService = state.dataService.dataService;
     let validation = {
-      validator: {},
       validationAction: INITIAL_STATE.validationAction,
       validationLevel: INITIAL_STATE.validationLevel
     };
-    let validator = '';
+
 
     if (dataService) {
       dataService.listCollections(
@@ -440,14 +438,10 @@ export const fetchValidation = (namespace) => {
 
           const options = data[0].options;
 
-          if (!errorColl && options) {
-            validator = options.validator
-              ? EJSON.stringify(options.validator, null, 2)
-              : {};
-
+          if (options) {
             validation = defaults(
               {
-                validator,
+                validator: options.validator,
                 validationAction: options.validationAction,
                 validationLevel: options.validationLevel
               },
@@ -455,22 +449,26 @@ export const fetchValidation = (namespace) => {
             );
           }
 
-          sendMetrics(
-            dispatch,
-            dataService,
-            namespace,
-            validation,
-            'schema-validation-fetched'
-          );
+          if (validation.validator) {
+            validation.validator = EJSON.stringify(options.validator, null, 2);
 
-          if (!isEmpty(validator)) {
             dispatch(zeroStateChanged());
+            dispatch(fetchSampleDocuments(validation.validator));
+            dispatch(validationFetched(validation));
+            sendMetrics(
+              dispatch,
+              dataService,
+              namespace,
+              validation,
+              'schema-validation-fetched'
+            );
+
+            return;
           }
 
-          dispatch(validationFetched(validation));
-          dispatch(fetchSampleDocuments(validator));
+          validation.validator = '{}';
 
-          return;
+          return dispatch(validationFetched(validation));
         }
       );
     }

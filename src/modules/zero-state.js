@@ -42,7 +42,6 @@ export const zeroStateChanged = () => ({
  * @param {Function} dispatch - Dispatch.
  * @param {Object} dataService - Data service.
  * @param {Object} namespace - Namespace.
- * @param {Object} validation - Validation.
  * @param {String} registryEvent - Registry event.
  *
  * @returns {Function} The function.
