@@ -1,9 +1,9 @@
 import React from 'react';
 import { mount } from 'enzyme';
-import CompassSchemaStates from 'components/compass-schema-states';
-import styles from './compass-schema-states.less';
+import ValidationStates from 'components/validation-states';
+import styles from './validation-states.less';
 
-describe('CompassSchemaStates [Component]', () => {
+describe('ValidationStates [Component]', () => {
   let component;
   const changeZeroStateSpy = sinon.spy();
   const setZeroStateChangedSpy = sinon.spy();
@@ -30,7 +30,7 @@ describe('CompassSchemaStates [Component]', () => {
 
   beforeEach(() => {
     component = mount(
-      <CompassSchemaStates
+      <ValidationStates
         validatorChanged={setValidatorChangedSpy}
         validationActionChanged={setValidationActionChangedSpy}
         validationLevelChanged={setValidationLevelChangedSpy}
@@ -55,7 +55,7 @@ describe('CompassSchemaStates [Component]', () => {
   });
 
   it('renders the wrapper div', () => {
-    expect(component.find(`.${styles['compass-schema-states']}`)).to.be.present();
+    expect(component.find(`.${styles['validation-states']}`)).to.be.present();
   });
 
   it('renders the version banner', () => {

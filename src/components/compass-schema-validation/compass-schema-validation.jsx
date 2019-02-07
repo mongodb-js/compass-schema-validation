@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { pick } from 'lodash';
-import CompassSchemaStates from 'components/compass-schema-states';
+import ValidationStates from 'components/validation-states';
 import {
   validatorChanged,
   cancelValidation,
@@ -31,7 +31,7 @@ class CompassSchemaValidation extends Component {
   render() {
     return (
       <div className={classnames(styles.root)}>
-        <CompassSchemaStates {...this.props} />
+        <ValidationStates {...this.props} />
       </div>
     );
   }

@@ -8,7 +8,7 @@ import SampleDocuments from 'components/sample-documents';
 import { ZeroGraphic } from 'components/zero-graphic';
 import semver from 'semver';
 
-import styles from './compass-schema-states.less';
+import styles from './validation-states.less';
 
 /**
  * The lowest supported version.
@@ -46,10 +46,10 @@ const DOC_SCHEMA_VALIDATION = 'https://docs.mongodb.com/manual/core/schema-valid
 const DOC_UPGRADE_REVISION = 'https://docs.mongodb.com/manual/tutorial/upgrade-revision/';
 
 /**
- * The CompassSchemaStates component.
+ * The ValidationStates component.
  */
-class CompassSchemaStates extends Component {
-  static displayName = 'CompassSchemaStates';
+class ValidationStates extends Component {
+  static displayName = 'ValidationStates';
 
   static propTypes = {
     isZeroState: PropTypes.bool.isRequired,
@@ -154,13 +154,13 @@ class CompassSchemaStates extends Component {
   }
 
   /**
-   * Renders the CompassSchemaStates component.
+   * Renders the ValidationStates component.
    *
    * @returns {React.Component} The component.
    */
   render() {
     return (
-      <div className={classnames(styles['compass-schema-states'])}>
+      <div className={classnames(styles['validation-states'])}>
         {this.renderBanner()}
         {this.renderZeroState()}
         {this.renderContent()}
@@ -169,4 +169,4 @@ class CompassSchemaStates extends Component {
   }
 }
 
-export default CompassSchemaStates;
+export default ValidationStates;
