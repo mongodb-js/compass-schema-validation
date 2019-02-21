@@ -14,7 +14,6 @@ import styles from './validation-states.less';
  */
 export const READ_ONLY_WARNING = {
   collectionReadOnly: 'Schema validation on readonly views are not supported.',
-  hardonReadOnly: 'This is a read-only version of Compass.',
   writeStateStoreReadOnly: 'This action is not available on a secondary node.',
   oldServerReadOnly: 'Compass no longer supports the visual rule builder for server versions below 3.2. To use the visual rule builder, please'
 };
@@ -85,16 +84,6 @@ class ValidationStates extends Component {
         );
       }
 
-      if (this.props.editMode.hardonReadOnly) {
-        return (
-          <StatusRow style="warning">
-            <div id="hardonReadOnly">
-              {READ_ONLY_WARNING.hardonReadOnly}
-            </div>
-          </StatusRow>
-        );
-      }
-
       if (this.props.editMode.writeStateStoreReadOnly) {
         return (
           <StatusRow style="warning">
@@ -105,21 +94,22 @@ class ValidationStates extends Component {
         );
       }
 
-
-      return (
-        <StatusRow style="warning">
-          <div id="oldServerReadOnly">
-            {READ_ONLY_WARNING.oldServerReadOnly}
-            <div>&nbsp;</div>
-            <a
-              className={classnames(styles['upgrade-link'])}
-              onClick={this.props.openLink.bind(this, DOC_UPGRADE_REVISION)}
-            >
-              upgrade to MongoDB 3.2.
-            </a>
-          </div>
-        </StatusRow>
-      );
+      if (this.props.editMode.oldServerReadOnly) {
+        return (
+          <StatusRow style="warning">
+            <div id="oldServerReadOnly">
+              {READ_ONLY_WARNING.oldServerReadOnly}
+              <div>&nbsp;</div>
+              <a
+                className={classnames(styles['upgrade-link'])}
+                onClick={this.props.openLink.bind(this, DOC_UPGRADE_REVISION)}
+              >
+                upgrade to MongoDB 3.2.
+              </a>
+            </div>
+          </StatusRow>
+        );
+      }
     }
   }
 
