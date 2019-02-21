@@ -25,12 +25,7 @@ describe('ValidationEditor [Component]', () => {
     syntaxError: null,
     error: null
   };
-  const editMode = {
-    collectionReadOnly: false,
-    hardonReadOnly: false,
-    writeStateStoreReadOnly: false,
-    oldServerReadOnly: false
-  };
+  const isEditable = true;
   const appRegistry = new AppRegistry();
 
   before(function() {
@@ -51,7 +46,7 @@ describe('ValidationEditor [Component]', () => {
         serverVersion={serverVersion}
         fields={fields}
         validation={validation}
-        editMode={editMode}
+        isEditable={isEditable}
         openLink={openLinkSpy} />
     );
   });

@@ -165,7 +165,7 @@ class ValidationStates extends Component {
     if (!this.props.isZeroState) {
       return (
         <div className={classnames(styles['content-container'])}>
-          <ValidationEditor {...this.props} />
+          <ValidationEditor {...this.props} isEditable={this.isEditable()} />
           <SampleDocuments {...this.props} />
         </div>
       );
