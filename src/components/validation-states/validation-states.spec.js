@@ -66,6 +66,12 @@ describe('ValidationStates [Component]', () => {
     it('renders the version banner', () => {
       expect(component.find({ id: 'oldServerReadOnly' })).to.be.present();
     });
+
+    it('does not render other banners', () => {
+      expect(component.find({ id: 'collectionReadOnly' })).to.be.not.present();
+      expect(component.find({ id: 'hardonReadOnly' })).to.be.not.present();
+      expect(component.find({ id: 'writeStateStoreReadOnly' })).to.be.not.present();
+    });
   });
 
   context('when the server version is higher than 3.2', () => {
@@ -123,7 +129,7 @@ describe('ValidationStates [Component]', () => {
       component = null;
     });
 
-    it('renders the read only banner', () => {
+    it('does not render a warning banner', () => {
       expect(component.find('StatusRow')).to.be.not.present();
     });
   });
@@ -183,16 +189,12 @@ describe('ValidationStates [Component]', () => {
       component = null;
     });
 
-    it('renders the version banner', () => {
-      expect(component.find({ id: 'hardonReadOnly' })).to.be.present();
-    });
-
-    it('renders the version banner', () => {
-      expect(component.find({ id: 'oldServerReadOnly' })).to.be.not.present();
+    it('does not render a warning banner', () => {
+      expect(component.find('StatusRow')).to.be.not.present();
     });
   });
 
-  context('when compass is in the read-only mode', () => {
+  context('when compass is not writable', () => {
     let component;
     const changeZeroStateSpy = sinon.spy();
     const setZeroStateChangedSpy = sinon.spy();
@@ -247,12 +249,14 @@ describe('ValidationStates [Component]', () => {
       component = null;
     });
 
-    it('renders the version banner', () => {
+    it('renders the writable banner', () => {
       expect(component.find({ id: 'writeStateStoreReadOnly' })).to.be.present();
     });
 
-    it('renders the version banner', () => {
+    it('does not render other banners', () => {
+      expect(component.find({ id: 'collectionReadOnly' })).to.be.not.present();
       expect(component.find({ id: 'hardonReadOnly' })).to.be.not.present();
+      expect(component.find({ id: 'oldServerReadOnly' })).to.be.not.present();
     });
   });
 });
