@@ -53,7 +53,7 @@
     "redux-thunk": "^2.2.0"
   },
   "devDependencies": {
-    "@mongodb-js/compass-field-store": "^1.0.0",
+    "@mongodb-js/compass-field-store": "^4.0.1",
     "@mongodb-js/compass-crud": "^6.1.2",
     "@storybook/react": "^3.2.0",
     "autoprefixer": "^7.1.2",
