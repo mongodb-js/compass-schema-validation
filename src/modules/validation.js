@@ -4,7 +4,7 @@ import javascriptStringify from 'javascript-stringify';
 import { fetchSampleDocuments } from './sample-documents';
 import { zeroStateChanged } from './zero-state';
 import { appRegistryEmit } from 'modules/app-registry';
-import { defaults, isEqual, pick } from 'lodash';
+import { defaults, isEqual, pick, isObject } from 'lodash';
 
 /**
  * The module action prefix.
@@ -338,6 +338,7 @@ const sendMetrics = (dispatch, dataService, namespace, validation, registryEvent
   .database(namespace.database, {}, (errorDB, res) => {
     let collectionSize = 0;
     let ruleCount = 0;
+    let validator = validation.validator;
 
     if (!errorDB) {
       const collection = res.collections.find((coll) => (
@@ -348,7 +349,9 @@ const sendMetrics = (dispatch, dataService, namespace, validation, registryEvent
     }
 
     try {
-      const validator = queryParser.parseFilter(validation.validator);
+      if (!isObject(validator)) {
+        validator = queryParser.parseFilter(validator);
+      }
 
       ruleCount = Object.keys(validator).length;
     } finally {
@@ -358,7 +361,7 @@ const sendMetrics = (dispatch, dataService, namespace, validation, registryEvent
           ruleCount,
           validationLevel: validation.validationLevel,
           validationAction: validation.validationAction,
-          jsonSchema: (validation.validator.indexOf('$jsonSchema') !== -1),
+          jsonSchema: (!!validator.$jsonSchema),
           collectionSize
         }
       ));
