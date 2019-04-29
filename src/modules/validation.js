@@ -337,6 +337,7 @@ export const syntaxErrorOccurred = (syntaxError) => ({
 const sendMetrics = (dispatch, dataService, namespace, validation, registryEvent) => dataService
   .database(namespace.database, {}, (errorDB, res) => {
     let collectionSize = 0;
+    let ruleCount = 0;
 
     if (!errorDB) {
       const collection = res.collections.find((coll) => (
@@ -346,16 +347,22 @@ const sendMetrics = (dispatch, dataService, namespace, validation, registryEvent
       collectionSize = collection.document_count;
     }
 
-    return dispatch(appRegistryEmit(
-      registryEvent,
-      {
-        ruleCount: Object.keys(validation.validator).length,
-        validationLevel: validation.validationLevel,
-        validationAction: validation.validationAction,
-        jsonSchema: (validation.validator.indexOf('$jsonSchema') !== -1),
-        collectionSize
-      }
-    ));
+    try {
+      const validator = queryParser.parseFilter(validation.validator);
+
+      ruleCount = Object.keys(validator).length;
+    } finally {
+      return dispatch(appRegistryEmit(
+        registryEvent,
+        {
+          ruleCount,
+          validationLevel: validation.validationLevel,
+          validationAction: validation.validationAction,
+          jsonSchema: (validation.validator.indexOf('$jsonSchema') !== -1),
+          collectionSize
+        }
+      ));
+    }
   });
 
 /**
@@ -403,12 +410,6 @@ export const fetchValidation = (namespace) => {
           }
 
           if (validation.validator) {
-            validation.validator = EJSON.stringify(options.validator, null, 2);
-
-            dispatch(zeroStateChanged(false));
-            dispatch(fetchSampleDocuments(validation.validator));
-            dispatch(validationFetched(validation));
-
             sendMetrics(
               dispatch,
               dataService,
@@ -416,6 +417,12 @@ export const fetchValidation = (namespace) => {
               validation,
               'schema-validation-fetched'
             );
+
+            validation.validator = EJSON.stringify(validation.validator, null, 2);
+
+            dispatch(zeroStateChanged(false));
+            dispatch(fetchSampleDocuments(validation.validator));
+            dispatch(validationFetched(validation));
 
             return;
           }
