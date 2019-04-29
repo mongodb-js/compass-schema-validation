@@ -354,18 +354,21 @@ const sendMetrics = (dispatch, dataService, namespace, validation, registryEvent
       }
 
       ruleCount = Object.keys(validator).length;
-    } finally {
-      return dispatch(appRegistryEmit(
-        registryEvent,
-        {
-          ruleCount,
-          validationLevel: validation.validationLevel,
-          validationAction: validation.validationAction,
-          jsonSchema: (!!validator.$jsonSchema),
-          collectionSize
-        }
-      ));
+    } catch (error) {
+      // In case of a parsing error set ruleCount to -1 to indicate the problem
+      ruleCount = -1;
     }
+
+    return dispatch(appRegistryEmit(
+      registryEvent,
+      {
+        ruleCount,
+        validationLevel: validation.validationLevel,
+        validationAction: validation.validationAction,
+        jsonSchema: (!!validator.$jsonSchema),
+        collectionSize
+      }
+    ));
   });
 
 /**
