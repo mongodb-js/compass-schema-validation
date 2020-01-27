@@ -13,7 +13,7 @@
     "start:watch": "npm run clean && webpack --config ./config/webpack.watch.config.js",
     "test": "cross-env NODE_ENV=test mocha-webpack \"./src/**/*.spec.js\"",
     "test:watch": "cross-env NODE_ENV=test mocha-webpack \"./src/**/*.spec.js\" --watch",
-    "test:karma": "cross-env NODE_ENV=test karma start",
+    "test:karma": "xvfb-maybe cross-env NODE_ENV=test karma start",
     "cover": "nyc npm run test",
     "ci": "npm run cover && npm run test:karma && npm run compile && npm run check",
     "check": "mongodb-js-precommit './src/**/*{.js,.jsx}' './test/**/*.js' './electron/**/*.js' './config/**/*{.js,.jsx}'",
@@ -146,7 +146,8 @@
     "webpack-dev-server": "^3.1.14",
     "webpack-merge": "^4.2.1",
     "webpack-node-externals": "^1.7.2",
-    "webpack-sources": "1.0.1"
+    "webpack-sources": "1.0.1",
+    "xvfb-maybe": "^0.2.1"
   },
   "dependencies": {
     "decomment": "^0.9.1",
