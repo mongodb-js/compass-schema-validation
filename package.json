@@ -13,14 +13,13 @@
     "start:watch": "npm run clean && webpack --config ./config/webpack.watch.config.js",
     "test": "cross-env NODE_ENV=test mocha-webpack \"./src/**/*.spec.js\"",
     "test:watch": "cross-env NODE_ENV=test mocha-webpack \"./src/**/*.spec.js\" --watch",
-    "test:karma": "xvfb-maybe cross-env NODE_ENV=test karma start",
+    "test:karma": "cross-env NODE_ENV=test karma start",
     "cover": "nyc npm run test",
-    "ci": "npm run cover && npm run test:karma && npm run compile && npm run check",
+    "ci": "npm run cover && xvfb-maybe npm run test:karma && npm run compile && npm run check",
     "check": "mongodb-js-precommit './src/**/*{.js,.jsx}' './test/**/*.js' './electron/**/*.js' './config/**/*{.js,.jsx}'",
     "link-plugin": "./scripts/link.sh",
     "unlink-plugin": "./scripts/unlink.sh",
-    "prepublishOnly": "npm run compile",
-    "storybook": "start-storybook -p 9001 -c .storybook"
+    "prepublishOnly": "npm run compile"
   },
   "license": "Apache-2.0",
   "dependency-check": {
